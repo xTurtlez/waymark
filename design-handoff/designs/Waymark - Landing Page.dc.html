@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<style>
+body{margin:0;background:#FBF6EE;font-family:Figtree,system-ui,sans-serif;color:#2B211C;-webkit-font-smoothing:antialiased}
+a{color:#0E5F5B}a:hover{color:#0A4744}
+*{box-sizing:border-box}
+</style>
+</helmet>
+<div style="min-height:100vh;overflow:hidden">
+
+<header style="position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:22px clamp(20px,4vw,48px);display:flex;align-items:center;gap:28px;flex-wrap:wrap">
+<a href="#" style="display:flex;align-items:center;gap:10px;color:#2B211C;text-decoration:none">
+<svg width="34" height="34" viewBox="0 0 48 48"><rect x="6" y="33" width="36" height="10" rx="5" fill="#0E5F5B"></rect><rect x="11" y="21.5" width="26" height="9.5" rx="4.75" fill="#E3A13A" transform="rotate(-5 24 26)"></rect><circle cx="25" cy="13" r="5.5" fill="#E36E55"></circle></svg>
+<span style="font:500 28px Newsreader,serif;letter-spacing:-.02em">Waymark</span>
+</a>
+<nav style="display:flex;gap:26px;flex-wrap:wrap;font:500 15px Figtree;margin-left:12px">
+<a href="#product" style="color:#4A3F38;text-decoration:none">Product</a>
+<a href="#assistant" style="color:#4A3F38;text-decoration:none">AI assistant</a>
+<a href="#families" style="color:#4A3F38;text-decoration:none">For your clients</a>
+<a href="#security" style="color:#4A3F38;text-decoration:none">Security</a>
+<a href="#pricing" style="color:#4A3F38;text-decoration:none">Pricing</a>
+</nav>
+<div style="margin-left:auto;display:flex;gap:10px;align-items:center">
+<a href="#" style="height:44px;padding:0 16px;display:flex;align-items:center;font:600 15px Figtree;color:#2B211C;text-decoration:none">Sign in</a>
+<a href="#demo" style="height:44px;padding:0 20px;border-radius:14px;background:#0E5F5B;color:#FFFDF9;display:flex;align-items:center;font:600 15px Figtree;text-decoration:none" style-hover="background:#0A4744">Book a demo</a>
+</div>
+</header>
+
+<section style="position:relative;max-width:1280px;margin:0 auto;padding:clamp(32px,6vw,72px) clamp(20px,4vw,48px) 80px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:56px;align-items:center">
+<div style="position:absolute;width:720px;height:720px;right:-220px;top:-160px;border-radius:50%;background:radial-gradient(circle,rgba(248,205,184,.85),rgba(252,230,201,.5) 45%,rgba(251,246,238,0) 70%);pointer-events:none"></div>
+<div style="position:relative">
+<div style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;background:#DCEDE9;color:#0E5F5B;font:600 14px Figtree">Probate software for firms in England &amp; Wales</div>
+<h1 style="margin:22px 0 0;font:400 clamp(44px,6vw,74px)/1.02 Newsreader,serif;letter-spacing:-.025em;text-wrap:balance">Every estate, every blocker, one calm workspace.</h1>
+<p style="margin:22px 0 0;max-width:560px;font:19px/1.55 Figtree;color:#4A3F38;text-wrap:pretty">Waymark gives your private client team a live view of every estate, an assistant that drafts and reads documents under your review, and a portal that keeps families informed so they don't have to call.</p>
+<div style="margin-top:32px;display:flex;gap:12px;flex-wrap:wrap">
+<a href="#demo" style="height:56px;padding:0 26px;border-radius:18px;background:#0E5F5B;color:#FFFDF9;display:flex;align-items:center;gap:10px;font:600 17px Figtree;text-decoration:none" style-hover="background:#0A4744">Book a demo<i class="ph-bold ph-arrow-right"></i></a>
+<a href="#product" style="height:56px;padding:0 24px;border-radius:18px;border:1.5px solid #CFC2AF;background:#FFFDF9;color:#2B211C;display:flex;align-items:center;gap:10px;font:600 17px Figtree;text-decoration:none"><i class="ph-fill ph-play-circle" style="font-size:22px;color:#E36E55"></i>Watch the 3-minute tour</a>
+</div>
+<p style="margin:20px 0 0;font:14px Figtree;color:#7A6D63">30-day pilot on your live estates. Migration from your case management system included.</p>
+</div>
+
+<div style="position:relative;min-height:520px">
+<div style="position:absolute;left:0;right:60px;top:20px;padding:20px;border-radius:24px;background:#FFFDF9;border:1px solid #EADFCF;box-shadow:0 40px 80px -30px rgba(43,33,28,.35)">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font:500 20px Newsreader,serif">Needs attention</span><span style="display:flex;gap:6px"><span style="padding:4px 10px;border-radius:99px;background:#FBE0D8;color:#A83E28;font:600 12px Figtree">4 estates</span></span></div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ heroEstates }}" as="e" hint-placeholder-count="4">
+<div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;align-items:center;padding:12px 14px;border-radius:16px;background:#FBF6EE">
+<div style="min-width:0"><div style="font:600 15px Figtree">{{ e.name }}</div><div style="margin-top:6px;display:grid;grid-template-columns:repeat(7,1fr);gap:3px"><sc-for list="{{ e.segs }}" as="g" hint-placeholder-count="7"><span style="height:5px;border-radius:99px;background:{{ g.bg }}"></span></sc-for></div></div>
+<div style="padding:7px 10px;border-radius:10px;background:{{ e.bg }};color:{{ e.fg }};font:600 12.5px/1.3 Figtree">{{ e.blocker }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="position:absolute;right:0;bottom:0;width:250px;padding:7px;border-radius:40px;background:#1E1815;box-shadow:0 40px 70px -24px rgba(43,33,28,.5)">
+<div style="border-radius:33px;overflow:hidden;background:linear-gradient(170deg,#FCE6C9,#F8CDB8 50%,#FBF6EE)">
+<div style="padding:22px 18px 18px">
+<div style="font:600 11px Figtree;color:#5E524A">Ellis &amp; Rowe</div>
+<div style="margin-top:8px;font:400 22px/1.15 Newsreader,serif">Good evening, Sarah.</div>
+<div style="margin-top:14px;padding:14px;border-radius:18px;background:#FFFDF9">
+<span style="padding:3px 8px;border-radius:99px;background:#FBE0D8;color:#A83E28;font:600 10px Figtree">Today's step</span>
+<div style="margin-top:8px;font:500 16px/1.2 Newsreader,serif">Let's list what Margaret owned</div>
+<div style="margin-top:10px;height:36px;border-radius:12px;background:#0E5F5B;color:#fff;display:grid;place-items:center;font:600 13px Figtree">Begin</div>
+</div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:10px;font:600 12px Figtree"><span style="width:22px;height:22px;border-radius:50%;background:#0E5F5B;color:#fff;display:grid;place-items:center;font-size:11px"><i class="ph-bold ph-check"></i></span>Register the death</div>
+<div style="display:flex;align-items:center;gap:10px;font:600 12px Figtree"><span style="width:22px;height:22px;border-radius:50%;background:#0E5F5B;color:#fff;display:grid;place-items:center;font-size:11px"><i class="ph-bold ph-check"></i></span>Gather documents</div>
+<div style="display:flex;align-items:center;gap:10px;font:600 12px Figtree;color:#A83E28"><span style="width:22px;height:22px;border-radius:50%;background:#E36E55;color:#fff;display:grid;place-items:center;font-size:11px;box-shadow:0 0 0 5px rgba(227,110,85,.2)">3</span>Value the estate</div>
+</div>
+</div>
+</div>
+</div>
+<div style="position:absolute;left:24px;bottom:40px;display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:16px;background:#5B2E57;color:#FBF6EE;font:600 14px Figtree;box-shadow:0 20px 40px -16px rgba(91,46,87,.5)"><i class="ph-fill ph-sparkle"></i>3 letters drafted · awaiting your review</div>
+</div>
+</section>
+
+<section style="background:#FFFDF9;border-top:1px solid #EADFCF;border-bottom:1px solid #EADFCF">
+<div style="max-width:1280px;margin:0 auto;padding:28px clamp(20px,4vw,48px);display:flex;flex-wrap:wrap;gap:10px 8px;align-items:center;justify-content:space-between">
+<span style="font:600 13px Figtree;letter-spacing:.06em;text-transform:uppercase;color:#7A6D63;margin-right:12px">Covers the whole administration</span>
+<sc-for list="{{ stages }}" as="s" hint-placeholder-count="7">
+<span style="display:flex;align-items:center;gap:8px;font:500 15px Figtree;color:#2B211C"><span style="width:26px;height:26px;border-radius:50%;background:{{ s.bg }};color:#fff;display:grid;place-items:center;font:700 12px Figtree">{{ s.n }}</span>{{ s.label }}</span>
+</sc-for>
+</div>
+</section>
+
+<section id="product" style="max-width:1280px;margin:0 auto;padding:110px clamp(20px,4vw,48px) 60px">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px;align-items:end">
+<h2 style="margin:0;font:400 clamp(36px,4.4vw,54px)/1.06 Newsreader,serif;letter-spacing:-.02em;text-wrap:balance">Built for teams running forty estates, not one.</h2>
+<p style="margin:0;font:18px/1.6 Figtree;color:#5E524A;text-wrap:pretty">Each stone in our mark is one part of the job. Waymark stacks them in one place, so a partner can see the whole caseload and a paralegal knows exactly what to do next.</p>
+</div>
+<div style="margin-top:56px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:20px">
+<sc-for list="{{ pillars }}" as="p" hint-placeholder-count="3">
+<div style="padding:30px;border-radius:28px;background:#FFFDF9;border:1px solid #EADFCF;display:flex;flex-direction:column;gap:16px">
+<svg width="56" height="56" viewBox="0 0 48 48"><rect x="6" y="33" width="36" height="10" rx="5" fill="{{ p.c1 }}"></rect><rect x="11" y="21.5" width="26" height="9.5" rx="4.75" fill="{{ p.c2 }}" transform="rotate(-5 24 26)"></rect><circle cx="25" cy="13" r="5.5" fill="{{ p.c3 }}"></circle></svg>
+<h3 style="margin:0;font:500 26px/1.15 Newsreader,serif">{{ p.title }}</h3>
+<p style="margin:0;font:16px/1.6 Figtree;color:#5E524A">{{ p.body }}</p>
+<div style="margin-top:auto;padding-top:14px;border-top:1px solid #F1E8DA;font:600 14px Figtree;color:#0E5F5B">{{ p.proof }}</div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section id="assistant" style="padding:20px clamp(12px,2vw,24px)">
+<div style="max-width:1340px;margin:0 auto;padding:clamp(40px,6vw,80px) clamp(24px,5vw,72px);border-radius:40px;background:#103F3C;color:#E8F0EC;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:56px;align-items:center;position:relative;overflow:hidden">
+<div style="position:absolute;width:420px;height:420px;left:-140px;bottom:-200px;border-radius:50%;background:radial-gradient(circle,rgba(227,161,58,.28),rgba(227,161,58,0) 70%)"></div>
+<div style="position:relative">
+<div style="display:inline-flex;align-items:center;gap:8px;font:600 13px Figtree;letter-spacing:.06em;text-transform:uppercase;color:#E3A13A"><i class="ph-fill ph-sparkle"></i>The assistant</div>
+<h2 style="margin:16px 0 0;font:400 clamp(34px,4.2vw,52px)/1.06 Newsreader,serif;letter-spacing:-.02em;color:#FBF6EE;text-wrap:balance">It does the first draft. You keep the final word.</h2>
+<p style="margin:18px 0 0;font:18px/1.6 Figtree;color:#BFD3CD;text-wrap:pretty">Nothing goes to a bank, HMRC or a client until a solicitor approves it. Every draft, edit and approval is logged against the estate.</p>
+<div style="margin-top:30px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px">
+<sc-for list="{{ ai }}" as="a" hint-placeholder-count="4">
+<div style="display:flex;gap:12px;align-items:flex-start"><span style="width:40px;height:40px;flex:none;border-radius:12px;background:rgba(255,255,255,.08);color:#E3A13A;display:grid;place-items:center;font-size:20px"><i class="{{ a.icon }}"></i></span><div><div style="font:600 16px Figtree;color:#FBF6EE">{{ a.title }}</div><div style="margin-top:3px;font:14.5px/1.5 Figtree;color:#A9C2BB">{{ a.body }}</div></div></div>
+</sc-for>
+</div>
+</div>
+<div style="position:relative;padding:22px;border-radius:24px;background:#FFFDF9;color:#2B211C;box-shadow:0 40px 80px -30px rgba(0,0,0,.5)">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span style="padding:5px 11px;border-radius:99px;border:1.5px dashed #5B2E57;color:#5B2E57;font:600 12.5px Figtree">Draft · needs your review</span><span style="font:13px Figtree;color:#7A6D63">Estate of M. Ellis</span></div>
+<div style="margin-top:14px;font:600 13px Figtree;color:#7A6D63">To: Barclays Bereavement Services</div>
+<p style="margin:10px 0 0;font:15px/1.6 Figtree">We act for the executor of the late Mrs Margaret Ann Ellis. We wrote on 19 September requesting the balance as at <span style="background:#FBEBCF;border-radius:4px;padding:0 3px">14 May 2026</span> and have not yet received a reply…</p>
+<div style="margin-top:14px;font:12.5px Figtree;color:#5B2E57"><b>Sources:</b> death certificate · Barclays letter 6 Oct · sent log</div>
+<div style="margin-top:16px;display:grid;grid-template-columns:1fr 1.4fr;gap:8px">
+<span style="height:44px;border-radius:12px;border:1.5px solid #B78FB0;display:flex;align-items:center;justify-content:center;font:600 14px Figtree;color:#5B2E57">Edit</span>
+<span style="height:44px;border-radius:12px;background:#0E5F5B;color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font:600 14px Figtree"><i class="ph-bold ph-check"></i>Approve &amp; send</span>
+</div>
+</div>
+</div>
+</section>
+
+<section id="families" style="max-width:1280px;margin:0 auto;padding:110px clamp(20px,4vw,48px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:64px;align-items:center">
+<div style="display:flex;justify-content:center">
+<div style="position:relative;width:min(100%,420px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 40% 35%,#FCE6C9,#F8CDB8 55%,#EFC9D6)">
+<div style="position:absolute;left:50%;top:8%;height:84%;aspect-ratio:9/16;transform:translateX(-50%);border-radius:22px;background:repeating-linear-gradient(135deg,rgba(255,253,249,.75) 0 10px,rgba(255,253,249,.5) 10px 20px);border:6px solid #1E1815;display:grid;place-items:center;padding:12px;text-align:center;font:12px/1.4 ui-monospace,Menlo,monospace;color:#5E524A">client journey screen recording</div>
+</div>
+</div>
+<div>
+<div style="font:600 13px Figtree;letter-spacing:.06em;text-transform:uppercase;color:#A83E28">For your clients</div>
+<h2 style="margin:14px 0 0;font:400 clamp(34px,4.2vw,52px)/1.06 Newsreader,serif;letter-spacing:-.02em;text-wrap:balance">Families feel looked after. Your phones go quiet.</h2>
+<p style="margin:18px 0 0;font:18px/1.6 Figtree;color:#5E524A;text-wrap:pretty">Executors get a portal in your firm's name. It shows one clear step at a time, explains legal terms when they tap them, and tells them what you've done on their behalf.</p>
+<div style="margin-top:28px;display:flex;flex-direction:column;gap:14px">
+<sc-for list="{{ family }}" as="f" hint-placeholder-count="4">
+<div style="display:flex;gap:14px;align-items:flex-start;font:16px/1.5 Figtree"><i class="ph-bold ph-check" style="margin-top:4px;color:#0E5F5B"></i><span><b>{{ f.title }}</b> {{ f.body }}</span></div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section id="security" style="background:#FFFDF9;border-top:1px solid #EADFCF;border-bottom:1px solid #EADFCF">
+<div style="max-width:1280px;margin:0 auto;padding:96px clamp(20px,4vw,48px)">
+<h2 style="margin:0;max-width:720px;font:400 clamp(32px,3.8vw,46px)/1.08 Newsreader,serif;letter-spacing:-.02em;text-wrap:balance">Built to satisfy your COLP and your clients.</h2>
+<div style="margin-top:44px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:1px;background:#EADFCF;border:1px solid #EADFCF;border-radius:24px;overflow:hidden">
+<sc-for list="{{ security }}" as="s" hint-placeholder-count="6">
+<div style="padding:26px;background:#FFFDF9"><i class="{{ s.icon }}" style="font-size:26px;color:#0E5F5B"></i><div style="margin-top:12px;font:600 17px Figtree">{{ s.title }}</div><div style="margin-top:6px;font:15px/1.55 Figtree;color:#5E524A">{{ s.body }}</div></div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<sc-if value="{{ showPricing }}" hint-placeholder-val="{{ true }}">
+<section id="pricing" style="max-width:1280px;margin:0 auto;padding:110px clamp(20px,4vw,48px) 60px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap">
+<div><h2 style="margin:0;font:400 clamp(34px,4.2vw,52px)/1.06 Newsreader,serif;letter-spacing:-.02em">Simple pricing, per fee earner.</h2><p style="margin:12px 0 0;font:17px/1.55 Figtree;color:#5E524A">Unlimited estates and client portals on every plan.</p></div>
+<div style="display:flex;gap:4px;padding:4px;border-radius:14px;background:#F1E8DA">
+<button onClick="{{ setMonthly }}" style="height:40px;padding:0 16px;border:0;border-radius:10px;background:{{ mBg }};font:600 14px Figtree;color:#2B211C;cursor:pointer">Monthly</button>
+<button onClick="{{ setAnnual }}" style="height:40px;padding:0 16px;border:0;border-radius:10px;background:{{ aBg }};font:600 14px Figtree;color:#2B211C;cursor:pointer">Annual · save 15%</button>
+</div>
+</div>
+<div style="margin-top:40px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px;align-items:stretch">
+<sc-for list="{{ plans }}" as="p" hint-placeholder-count="3">
+<div style="padding:30px;border-radius:28px;background:{{ p.bg }};color:{{ p.fg }};border:{{ p.border }};display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font:500 26px Newsreader,serif">{{ p.name }}</span><sc-if value="{{ p.tag }}"><span style="padding:4px 10px;border-radius:99px;background:#E3A13A;color:#2B211C;font:700 12px Figtree">{{ p.tag }}</span></sc-if></div>
+<div style="font:15px/1.5 Figtree;opacity:.85">{{ p.who }}</div>
+<div style="display:flex;align-items:baseline;gap:6px"><span style="font:500 46px Newsreader,serif;letter-spacing:-.02em">{{ p.price }}</span><span style="font:14px Figtree;opacity:.8">{{ p.unit }}</span></div>
+<div style="display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid {{ p.rule }}">
+<sc-for list="{{ p.feats }}" as="f" hint-placeholder-count="4"><div style="display:flex;gap:10px;font:15px/1.45 Figtree"><i class="ph-bold ph-check" style="margin-top:3px;color:{{ p.tick }}"></i>{{ f.t }}</div></sc-for>
+</div>
+<a href="#demo" style="margin-top:auto;height:52px;border-radius:16px;background:{{ p.btnBg }};color:{{ p.btnFg }};display:flex;align-items:center;justify-content:center;font:600 16px Figtree;text-decoration:none">{{ p.cta }}</a>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-if>
+
+<section id="demo" style="padding:60px clamp(12px,2vw,24px) 24px">
+<div style="position:relative;max-width:1340px;margin:0 auto;padding:clamp(40px,6vw,80px) clamp(24px,5vw,72px);border-radius:40px;background:linear-gradient(160deg,#FCE6C9 0%,#F8CDB8 45%,#EFC9D6 100%);overflow:hidden;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:48px;align-items:center">
+<svg width="360" height="360" viewBox="0 0 48 48" style="position:absolute;right:-60px;bottom:-90px;opacity:.16"><rect x="6" y="33" width="36" height="10" rx="5" fill="#0E5F5B"></rect><rect x="11" y="21.5" width="26" height="9.5" rx="4.75" fill="#5B2E57" transform="rotate(-5 24 26)"></rect><circle cx="25" cy="13" r="5.5" fill="#A83E28"></circle></svg>
+<div style="position:relative">
+<h2 style="margin:0;font:400 clamp(36px,4.6vw,58px)/1.04 Newsreader,serif;letter-spacing:-.02em;text-wrap:balance">See Waymark with one of your own estates.</h2>
+<p style="margin:16px 0 0;font:18px/1.6 Figtree;color:#4A3F38;max-width:520px">A 30-minute call with our product team. Bring a live matter, anonymised, and we'll set it up while you watch.</p>
+</div>
+<div style="position:relative;padding:28px;border-radius:28px;background:#FFFDF9;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<label style="display:flex;flex-direction:column;gap:6px;font:600 14px Figtree">Your name<input placeholder="Priya Shah" style="height:50px;padding:0 14px;border-radius:14px;border:1.5px solid #CFC2AF;background:#FBF6EE;font:16px Figtree;color:#2B211C"></label>
+<label style="display:flex;flex-direction:column;gap:6px;font:600 14px Figtree">Firm<input placeholder="Ellis &amp; Rowe" style="height:50px;padding:0 14px;border-radius:14px;border:1.5px solid #CFC2AF;background:#FBF6EE;font:16px Figtree;color:#2B211C"></label>
+<label style="grid-column:1/-1;display:flex;flex-direction:column;gap:6px;font:600 14px Figtree">Work email<input placeholder="priya@ellisrowe.co.uk" style="height:50px;padding:0 14px;border-radius:14px;border:1.5px solid #CFC2AF;background:#FBF6EE;font:16px Figtree;color:#2B211C"></label>
+<div style="grid-column:1/-1;display:flex;flex-direction:column;gap:8px;font:600 14px Figtree">Estates you handle each year
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<sc-for list="{{ sizes }}" as="z" hint-placeholder-count="4"><button onClick="{{ z.pick }}" style="height:44px;padding:0 16px;border-radius:99px;border:{{ z.border }};background:{{ z.bg }};color:{{ z.fg }};font:600 14px Figtree;cursor:pointer">{{ z.label }}</button></sc-for>
+</div>
+</div>
+<a href="#demo" style="grid-column:1/-1;height:56px;border-radius:18px;background:#0E5F5B;color:#FFFDF9;display:flex;align-items:center;justify-content:center;gap:10px;font:600 17px Figtree;text-decoration:none">Book my demo<i class="ph-bold ph-arrow-right"></i></a>
+</div>
+</div>
+</section>
+
+<footer style="max-width:1280px;margin:0 auto;padding:48px clamp(20px,4vw,48px) 56px;display:flex;flex-wrap:wrap;gap:24px 48px;align-items:flex-start;justify-content:space-between">
+<div style="max-width:340px">
+<div style="display:flex;align-items:center;gap:10px"><svg width="28" height="28" viewBox="0 0 48 48"><rect x="6" y="33" width="36" height="10" rx="5" fill="#0E5F5B"></rect><rect x="11" y="21.5" width="26" height="9.5" rx="4.75" fill="#E3A13A" transform="rotate(-5 24 26)"></rect><circle cx="25" cy="13" r="5.5" fill="#E36E55"></circle></svg><span style="font:500 24px Newsreader,serif">Waymark</span></div>
+<p style="margin:12px 0 0;font:14px/1.6 Figtree;color:#7A6D63">Probate, one clear step at a time. Software for law firms. Waymark is not a law firm and does not give legal advice.</p>
+</div>
+<div style="display:flex;gap:56px;flex-wrap:wrap;font:15px/2 Figtree">
+<div style="display:flex;flex-direction:column"><b style="font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#7A6D63">Product</b><a href="#product" style="color:#2B211C;text-decoration:none">Workspace</a><a href="#assistant" style="color:#2B211C;text-decoration:none">Assistant</a><a href="#families" style="color:#2B211C;text-decoration:none">Client portal</a></div>
+<div style="display:flex;flex-direction:column"><b style="font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#7A6D63">Company</b><a href="#security" style="color:#2B211C;text-decoration:none">Security</a><a href="#pricing" style="color:#2B211C;text-decoration:none">Pricing</a><a href="#demo" style="color:#2B211C;text-decoration:none">Contact</a></div>
+</div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showPricing&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { annual: true, size: 1 };
+  renderVals() {
+    const seg = st => Array.from({ length: 7 }, (_, i) => ({ bg: i < st ? '#0E5F5B' : i === st ? '#E36E55' : '#EADFCF' }));
+    const annual = this.state.annual;
+    const price = m => `£${annual ? Math.round(m * 0.85) : m}`;
+    const plans = [
+      { name:'Team', who:'For small private client teams getting started.', price: price(79), unit:'per fee earner / month', tag:null,
+        feats:['Unlimited estates and client portals','Practice dashboard and estate workspace','Document vault with checklists','Email support'],
+        cta:'Start a pilot', bg:'#FFFDF9', fg:'#2B211C', border:'1px solid #EADFCF', rule:'#F1E8DA', tick:'#0E5F5B', btnBg:'#F1E8DA', btnFg:'#2B211C' },
+      { name:'Practice', who:'For firms running a full probate department.', price: price(129), unit:'per fee earner / month', tag:'Most chosen',
+        feats:['Everything in Team','AI drafting, extraction and estate summaries','IHT position and audit trail exports','Practice management integration'],
+        cta:'Book a demo', bg:'#103F3C', fg:'#FBF6EE', border:'1px solid #103F3C', rule:'rgba(255,255,255,.14)', tick:'#E3A13A', btnBg:'#E3A13A', btnFg:'#2B211C' },
+      { name:'Enterprise', who:'For multi-office firms and panels.', price:'Custom', unit:'', tag:null,
+        feats:['Everything in Practice','SSO and custom data retention','Your own branding and domain','Named success manager'],
+        cta:'Talk to us', bg:'#FFFDF9', fg:'#2B211C', border:'1px solid #EADFCF', rule:'#F1E8DA', tick:'#0E5F5B', btnBg:'#F1E8DA', btnFg:'#2B211C' }
+    ].map(p => ({ ...p, feats: p.feats.map(t => ({ t })) }));
+    return {
+      heroEstates: [
+        { name:'Margaret Ellis', segs: seg(2), blocker:'Barclays · 21 days', bg:'#EEDFEA', fg:'#5B2E57' },
+        { name:'Kwame Asante', segs: seg(2), blocker:'Aviva pension · overdue', bg:'#FBE0D8', fg:'#A83E28' },
+        { name:'Anil Mehta', segs: seg(3), blocker:'HMRC query · 12 days left', bg:'#FBE0D8', fg:'#A83E28' },
+        { name:'Jean Whitfield', segs: seg(1), blocker:'With David · original will', bg:'#FBEBCF', fg:'#8A5508' }
+      ],
+      stages: ['Register','Gather','Value','IHT','Probate','Collect & pay','Distribute'].map((label, i) => ({ label, n: i + 1, bg: ['#0E5F5B','#0E5F5B','#E3A13A','#E3A13A','#E36E55','#E36E55','#5B2E57'][i] })),
+      pillars: [
+        { title:'See what\'s blocked, and on whom', body:'Every estate as a card, with its stage, days open, and whether it\'s waiting on the family, a bank, HMRC or the Probate Registry.', proof:'"Needs attention" view surfaces overdue items automatically', c1:'#0E5F5B', c2:'#EADFCF', c3:'#EADFCF' },
+        { title:'One workspace per estate', body:'Parties, assets, liabilities, IHT position, documents, tasks and notes in one place, with a full audit trail behind every change.', proof:'Live IHT position against NRB and RNRB', c1:'#0E5F5B', c2:'#E3A13A', c3:'#EADFCF' },
+        { title:'Families who don\'t need to chase', body:'Clients see progress, upload documents from their phone and read plain-English updates in your firm\'s name.', proof:'Updates post automatically as you work', c1:'#0E5F5B', c2:'#E3A13A', c3:'#E36E55' }
+      ],
+      ai: [
+        { icon:'ph ph-envelope-simple', title:'Drafts letters', body:'To banks, pension providers, HMRC and beneficiaries, using the facts on file.' },
+        { icon:'ph ph-scan', title:'Reads documents', body:'Pulls balances, account numbers and dates from uploads, and shows how confident it is.' },
+        { icon:'ph ph-warning-circle', title:'Flags what\'s missing', body:'Checks the file against the will and HMRC requirements.' },
+        { icon:'ph ph-text-align-left', title:'Summarises the estate', body:'Ready for a file note, a supervision review or a client call.' }
+      ],
+      family: [
+        { title:'Your name, not ours.', body:'The portal carries your firm\'s branding.' },
+        { title:'Plain English throughout.', body:'Legal terms explained on tap.' },
+        { title:'Made for phones.', body:'Executors upload documents with their camera.' },
+        { title:'A clear general-guidance assistant.', body:'It answers "what does this mean?" and hands anything specific to you.' }
+      ],
+      security: [
+        { icon:'ph ph-map-pin', title:'UK data residency', body:'All client data stored and processed in the UK.' },
+        { icon:'ph ph-lock-key', title:'Encrypted end to end', body:'In transit and at rest, with firm-managed retention.' },
+        { icon:'ph ph-list-checks', title:'Immutable audit trail', body:'Every view, edit, draft and approval, exportable per estate.' },
+        { icon:'ph ph-users-three', title:'Role-based access', body:'Partners, fee earners, paralegals and clients each see only what they should.' },
+        { icon:'ph ph-identification-card', title:'Client ID checks', body:'Built-in identity verification for executors and beneficiaries.' },
+        { icon:'ph ph-plugs-connected', title:'Fits your stack', body:'Integrates with practice management, accounts and document systems.' }
+      ],
+      showPricing: this.props.showPricing ?? true,
+      plans, mBg: annual ? 'transparent' : '#FFFDF9', aBg: annual ? '#FFFDF9' : 'transparent',
+      setMonthly: () => this.setState({ annual: false }), setAnnual: () => this.setState({ annual: true }),
+      sizes: ['Under 50','50–200','200–500','500+'].map((label, i) => {
+        const on = this.state.size === i;
+        return { label, pick: () => this.setState({ size: i }), bg: on ? '#0E5F5B' : '#FFFDF9', fg: on ? '#fff' : '#2B211C', border: on ? '1.5px solid #0E5F5B' : '1.5px solid #CFC2AF' };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

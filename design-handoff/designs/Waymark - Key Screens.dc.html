@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<style>
+body{margin:0;background:#EEE6D9;font-family:Figtree,system-ui,sans-serif;color:#2B211C;-webkit-font-smoothing:antialiased}
+a{color:#0E5F5B}a:hover{color:#0A4744}
+.dv-turn{padding:48px 52px 40px;border-bottom:1px solid rgba(43,33,28,.1);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 10px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#2B211C;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 14px/1.2 Figtree,sans-serif;color:#2B211C}
+.dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(43,33,28,.09);color:#2B211C;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 12px/1.3 Figtree,sans-serif;color:rgba(43,33,28,.6)}
+.dv-card{max-width:100%;background:#FBF6EE;border:1px solid rgba(43,33,28,.08);border-radius:10px;box-shadow:0 1px 3px rgba(43,33,28,.06);overflow:hidden}
+.dv-opt:target .dv-oid{background:#0E5F5B;color:#fff}
+.dv-next{margin:28px 0 0;font:13px/1.5 Figtree,sans-serif;color:rgba(43,33,28,.55)}
+</style>
+</helmet>
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Waymark — both sides of the product, plus the system</span></div>
+<p style="margin:0 0 32px;max-width:860px;font:15px/1.6 Figtree,sans-serif;color:#5E524A;text-wrap:pretty"><b>Waymark</b> is software that probate firms license; families use it free through their firm, so client screens carry the firm's name and "we" always means the firm. Sample estate: Margaret Ellis, died May 2026; her daughter Sarah is executor; solicitor Priya Shah at Ellis &amp; Rowe. Colour carries meaning everywhere: <b style="color:#0E5F5B">teal</b> done / primary, <b style="color:#A83E28">coral</b> you are here / needs attention, <b style="color:#8A5508">amber</b> waiting on the family, <b style="color:#5B2E57">plum</b> third parties and AI. Remaining screens: <a href="Waymark - Client Screens.dc.html">Client screens</a> · <a href="Waymark - Solicitor Workspace.dc.html">Solicitor workspace</a>.</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Client · The Journey (mobile, full scroll shown)</div>
+<div style="width:390px;padding:11px;background:#1E1815;border-radius:58px;box-shadow:0 30px 60px -20px rgba(43,33,28,.45)">
+<div style="position:relative;border-radius:47px;overflow:hidden;background:#FBF6EE">
+<div style="position:relative;background:linear-gradient(170deg,#FCE6C9 0%,#F8CDB8 38%,#EFC9D6 72%,#FBF6EE 100%);padding:0 0 40px;overflow:hidden">
+<div style="position:absolute;width:220px;height:220px;right:-70px;top:60px;border-radius:100% 0;background:rgba(14,95,91,.10);transform:rotate(20deg)"></div>
+<div style="position:absolute;width:140px;height:140px;right:40px;top:150px;border-radius:100% 0;background:rgba(91,46,87,.08);transform:rotate(-30deg)"></div>
+<div style="position:absolute;width:260px;height:260px;left:-120px;top:-90px;border-radius:50%;background:radial-gradient(circle,rgba(255,230,180,.9),rgba(255,230,180,0) 70%)"></div>
+<div style="position:relative;display:flex;justify-content:space-between;align-items:center;padding:16px 30px 0;font:600 15px Figtree">
+<span>22:47</span><span style="display:flex;gap:6px;font-size:16px"><i class="ph-fill ph-cell-signal-high"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span>
+</div>
+<div style="position:relative;display:flex;justify-content:space-between;align-items:center;padding:22px 24px 0">
+<div style="display:flex;align-items:center;gap:8px;font:600 20px Newsreader,serif;letter-spacing:-.01em"><svg width="24" height="24" viewBox="0 0 24 24" style="flex:none"><path d="M3 20 C8 5 14 21 19 6" fill="none" stroke="#0E5F5B" stroke-width="3.2" stroke-linecap="round"></path><circle cx="19" cy="6" r="3.4" fill="#E36E55"></circle></svg>Waymark<span style="font:500 13px Figtree;color:#5E524A;margin-left:2px">with Ellis &amp; Rowe</span></div>
+<div style="width:44px;height:44px;border-radius:50%;background:#FFFDF9;display:grid;place-items:center;font:600 15px Figtree;color:#5B2E57">SE</div>
+</div>
+<div style="position:relative;padding:30px 24px 0">
+<p style="margin:0;font:500 15px Figtree;color:#5E524A">Margaret Ellis's estate</p>
+<h1 style="margin:6px 0 0;font:400 36px/1.12 Newsreader,serif;letter-spacing:-.015em;text-wrap:pretty">Good evening, Sarah. You're doing well.</h1>
+<p style="margin:12px 0 0;font:17px/1.5 Figtree;color:#4A3F38;text-wrap:pretty">Two stages are behind you. There's one thing to look at today, and it can wait until morning.</p>
+</div>
+<div style="position:relative;margin:24px 16px 0;padding:22px;border-radius:28px;background:#FFFDF9;box-shadow:0 12px 30px -12px rgba(120,60,40,.25)">
+<div style="display:flex;align-items:center;gap:8px"><span style="padding:5px 11px;border-radius:99px;background:#FBE0D8;color:#A83E28;font:600 13px Figtree">Today's step</span><span style="font:500 13px Figtree;color:#7A6D63">About 15 minutes</span></div>
+<h2 style="margin:14px 0 0;font:500 25px/1.2 Newsreader,serif">Let's list what Margaret owned</h2>
+<p style="margin:8px 0 0;font:16px/1.5 Figtree;color:#5E524A;text-wrap:pretty">Start with her bank accounts. A recent statement for each is enough. Priya will do the rest.</p>
+<a href="Waymark - Client Screens.dc.html#2b" style="margin-top:18px;height:56px;border-radius:18px;background:#0E5F5B;color:#FFFDF9;display:flex;align-items:center;justify-content:center;gap:10px;font:600 17px Figtree;text-decoration:none" style-hover="background:#0A4744">Begin<i class="ph-bold ph-arrow-right"></i></a>
+</div>
+</div>
+
+<div style="padding:8px 24px 0">
+<div style="display:flex;justify-content:space-between;align-items:baseline">
+<h3 style="margin:0;font:500 24px Newsreader,serif">Your path</h3>
+<span style="font:600 14px Figtree;color:#0E5F5B">{{ stageSummary }}</span>
+</div>
+<p style="margin:6px 0 0;font:15px/1.5 Figtree;color:#7A6D63">Seven stages. Priya handles most of them for you.</p>
+</div>
+<div style="position:relative;width:342px;height:910px;margin:12px auto 0">
+<svg width="342" height="910" viewBox="0 0 342 910" style="position:absolute;inset:0;overflow:visible">
+<defs><linearGradient id="hpg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0E5F5B"></stop><stop offset=".55" stop-color="#E3A13A"></stop><stop offset="1" stop-color="#E36E55"></stop></linearGradient></defs>
+<path d="{{ fullD }}" fill="none" stroke="#EADFCF" stroke-width="12" stroke-linecap="round"></path>
+<path d="{{ fullD }}" fill="none" stroke="#FBF6EE" stroke-width="2" stroke-dasharray="2 10" stroke-linecap="round"></path>
+<path ref="{{ pathRef }}" d="{{ progD }}" fill="none" stroke="url(#hpg)" stroke-width="12" stroke-linecap="round"></path>
+</svg>
+<sc-for list="{{ stages }}" as="s" hint-placeholder-count="7">
+<div style="position:absolute;left:{{ s.cx }}px;top:{{ s.cy }}px;width:{{ s.cw }}px;padding:14px 16px;border-radius:20px;background:{{ s.cardBg }};border:{{ s.cardBorder }};box-shadow:{{ s.cardShadow }};text-align:{{ s.align }};box-sizing:border-box">
+<div style="font:600 12px Figtree;letter-spacing:.06em;text-transform:uppercase;color:{{ s.eyebrowFg }}">{{ s.eyebrow }}</div>
+<div style="margin-top:4px;font:500 19px/1.2 Newsreader,serif;color:#2B211C">{{ s.title }}</div>
+<div style="margin-top:4px;font:14px/1.35 Figtree;color:#5E524A">{{ s.meta }}</div>
+</div>
+<div style="position:absolute;left:{{ s.nx }}px;top:{{ s.ny }}px;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;display:grid;place-items:center;background:{{ s.nodeBg }};border:{{ s.nodeBorder }};color:{{ s.nodeFg }};font:600 17px Figtree;box-shadow:{{ s.nodeShadow }};box-sizing:border-box">
+<sc-if value="{{ s.done }}"><i class="ph-bold ph-check"></i></sc-if>
+<sc-if value="{{ s.notDone }}"><span>{{ s.num }}</span></sc-if>
+</div>
+</sc-for>
+</div>
+
+<div style="margin:12px 16px 0;padding:22px;border-radius:28px;background:#FFFDF9;border:1px solid #EADFCF">
+<h3 style="margin:0;font:500 22px Newsreader,serif">An honest timeline</h3>
+<p style="margin:8px 0 0;font:16px/1.5 Figtree;color:#4A3F38;text-wrap:pretty">Estates like Margaret's usually take <b>9 to 12 months</b>. You're about 3 months in.</p>
+<div style="position:relative;margin:18px 0 0;height:12px;border-radius:99px;background:#F1E8DA">
+<div style="position:absolute;inset:0 72% 0 0;border-radius:99px;background:linear-gradient(90deg,#0E5F5B,#E3A13A)"></div>
+<div style="position:absolute;left:28%;top:-5px;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:#E36E55;border:4px solid #FFFDF9;box-sizing:border-box"></div>
+</div>
+<div style="display:flex;justify-content:space-between;margin-top:8px;font:500 13px Figtree;color:#7A6D63"><span>Jun 2026</span><span>Now</span><span>Spring 2027</span></div>
+<p style="margin:16px 0 0;font:15px/1.55 Figtree;color:#5E524A;text-wrap:pretty">Once any tax is settled, Priya applies for the <button onClick="{{ toggleTerm }}" style="padding:0;border:0;background:none;font:inherit;font-weight:600;color:#0E5F5B;text-decoration:underline dotted;text-underline-offset:4px;cursor:pointer">grant of probate</button>. The probate office currently takes 8 to 16 weeks.</p>
+<sc-if value="{{ termOpen }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:12px;padding:14px 16px;border-radius:16px;background:#DCEDE9;font:15px/1.5 Figtree;color:#123C3A">
+<div style="display:flex;justify-content:space-between;align-items:center;font:600 13px Figtree;letter-spacing:.04em;text-transform:uppercase;color:#0E5F5B">In plain English<button onClick="{{ toggleTerm }}" aria-label="Close" style="width:32px;height:32px;border:0;border-radius:50%;background:rgba(14,95,91,.1);color:#0E5F5B;cursor:pointer"><i class="ph-bold ph-x"></i></button></div>
+A legal document from the court that confirms Sarah is allowed to deal with Margaret's money and property. Banks ask to see it before they release funds.
+</div>
+</sc-if>
+<p style="margin:14px 0 0;font:14px/1.5 Figtree;color:#7A6D63">Questions from HMRC or slow replies from banks can add time. Priya will tell you as soon as anything changes.</p>
+</div>
+
+<div style="margin:12px 16px 0;padding:16px;border-radius:24px;background:#EEDFEA;display:flex;align-items:center;gap:14px">
+<div style="width:52px;height:52px;flex:none;border-radius:50%;background:#5B2E57;color:#FBF6EE;display:grid;place-items:center;font:600 17px Figtree">PS</div>
+<div style="flex:1;min-width:0"><div style="font:600 16px Figtree">Priya Shah</div><div style="font:14px/1.35 Figtree;color:#5B2E57">Your solicitor · usually replies within a working day</div></div>
+<a href="Waymark - Client Screens.dc.html#2e" aria-label="Message Priya" style="width:48px;height:48px;flex:none;border-radius:50%;background:#FFFDF9;color:#5B2E57;display:grid;place-items:center;font-size:22px;text-decoration:none"><i class="ph ph-chat-circle-text"></i></a>
+</div>
+
+<div style="margin-top:28px;padding:10px 12px 28px;background:#FFFDF9;border-top:1px solid #EADFCF;display:grid;grid-template-columns:repeat(5,1fr)">
+<sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;min-height:52px;justify-content:center;color:{{ n.fg }};font:600 11.5px Figtree"><i class="{{ n.icon }}" style="font-size:24px"></i>{{ n.label }}</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Solicitor · Practice dashboard (desktop 1440). Tabs filter live.</div>
+<div class="dv-card" style="width:1440px;display:grid;grid-template-columns:248px 1fr;min-height:980px;border-radius:14px">
+<aside style="background:#103F3C;color:#E8F0EC;padding:28px 18px;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;align-items:center;gap:10px;padding:0 10px;font:600 22px Newsreader,serif;color:#FBF6EE"><svg width="24" height="24" viewBox="0 0 24 24" style="flex:none"><path d="M3 20 C8 5 14 21 19 6" fill="none" stroke="#FBF6EE" stroke-width="3.2" stroke-linecap="round"></path><circle cx="19" cy="6" r="3.4" fill="#E3A13A"></circle></svg>Waymark<span style="font:600 11px Figtree;padding:3px 7px;border-radius:6px;background:rgba(255,255,255,.12);letter-spacing:.04em">PRACTICE</span></div>
+<nav style="display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ sideNav }}" as="n" hint-placeholder-count="7">
+<div style="display:flex;align-items:center;gap:12px;height:44px;padding:0 12px;border-radius:12px;background:{{ n.bg }};font:500 15px Figtree;color:{{ n.fg }}"><i class="{{ n.icon }}" style="font-size:20px"></i><span style="flex:1">{{ n.label }}</span><sc-if value="{{ n.count }}"><span style="min-width:24px;height:22px;padding:0 7px;border-radius:99px;background:{{ n.countBg }};color:#2B211C;font:700 12px/22px Figtree;text-align:center;box-sizing:border-box">{{ n.count }}</span></sc-if></div>
+</sc-for>
+</nav>
+<div style="margin-top:auto;display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:rgba(255,255,255,.06)">
+<div style="width:40px;height:40px;border-radius:50%;background:#E36E55;color:#fff;display:grid;place-items:center;font:600 14px Figtree">PS</div>
+<div><div style="font:600 14px Figtree;color:#FBF6EE">Priya Shah</div><div style="font:13px Figtree;color:#A9C2BB">Partner · Ellis &amp; Rowe</div></div>
+</div>
+</aside>
+<main style="padding:36px 40px 44px;display:flex;flex-direction:column;gap:26px;min-width:0">
+<header style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px">
+<div><p style="margin:0;font:500 14px Figtree;color:#7A6D63">Saturday 10 October</p><h1 style="margin:4px 0 0;font:400 38px/1.1 Newsreader,serif;letter-spacing:-.015em">Good morning, Priya. Four estates need you today.</h1></div>
+<div style="display:flex;gap:10px;align-items:center">
+<div style="display:flex;align-items:center;gap:10px;width:300px;height:46px;padding:0 16px;border-radius:14px;background:#FFFDF9;border:1px solid #EADFCF;color:#7A6D63;font:15px Figtree;box-sizing:border-box"><i class="ph ph-magnifying-glass" style="font-size:18px"></i>Search estates, people, refs<span style="margin-left:auto;font:600 12px ui-monospace,monospace;padding:2px 6px;border-radius:6px;background:#F1E8DA">⌘K</span></div>
+<div style="display:flex;align-items:center;gap:8px;height:46px;padding:0 18px;border-radius:14px;background:#0E5F5B;color:#FFFDF9;font:600 15px Figtree;cursor:pointer" style-hover="background:#0A4744"><i class="ph-bold ph-plus"></i>New estate</div>
+</div>
+</header>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+<div style="display:flex;gap:6px;padding:5px;border-radius:16px;background:#F1E8DA">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+<button onClick="{{ t.select }}" style="display:flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:0;border-radius:12px;background:{{ t.bg }};box-shadow:{{ t.shadow }};color:#2B211C;font:600 14px Figtree;cursor:pointer"><span style="width:8px;height:8px;border-radius:50%;background:{{ t.dot }}"></span>{{ t.label }}<span style="font-weight:500;color:#7A6D63">{{ t.n }}</span></button>
+</sc-for>
+</div>
+<div style="display:flex;gap:8px;font:500 14px Figtree;color:#5E524A">
+<span style="display:flex;align-items:center;gap:6px;height:40px;padding:0 14px;border-radius:12px;border:1px solid #EADFCF;background:#FFFDF9">All stages<i class="ph ph-caret-down"></i></span>
+<span style="display:flex;align-items:center;gap:6px;height:40px;padding:0 14px;border-radius:12px;border:1px solid #EADFCF;background:#FFFDF9">Fee earner: anyone<i class="ph ph-caret-down"></i></span>
+<span style="display:flex;align-items:center;gap:6px;height:40px;padding:0 14px;border-radius:12px;border:1px solid #EADFCF;background:#FFFDF9"><i class="ph ph-sort-descending"></i>Longest waiting</span>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:28px;align-items:start">
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px">
+<sc-for list="{{ estates }}" as="e" hint-placeholder-count="6">
+<div style="position:relative;padding:20px;border-radius:22px;background:#FFFDF9;border:1px solid {{ e.border }};display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 2px rgba(43,33,28,.04)" style-hover="box-shadow:0 10px 24px -12px rgba(43,33,28,.25)">
+<div style="display:flex;justify-content:space-between;gap:10px">
+<div style="min-width:0"><div style="font:500 20px/1.2 Newsreader,serif">{{ e.name }}</div><div style="margin-top:3px;font:13px Figtree;color:#7A6D63">{{ e.ref }} · {{ e.client }}</div></div>
+<div style="width:34px;height:34px;flex:none;border-radius:50%;background:{{ e.earnerBg }};color:#fff;display:grid;place-items:center;font:600 12px Figtree">{{ e.earner }}</div>
+</div>
+<div>
+<div style="display:flex;justify-content:space-between;font:600 13px Figtree"><span>{{ e.stageName }}</span><span style="font-weight:500;color:#7A6D63">{{ e.days }} days open</span></div>
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px"><sc-for list="{{ e.segs }}" as="g" hint-placeholder-count="7"><span style="height:7px;border-radius:99px;background:{{ g.bg }}"></span></sc-for></div>
+</div>
+<div style="display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border-radius:14px;background:{{ e.chipBg }};color:{{ e.chipFg }};font:500 13.5px/1.35 Figtree"><i class="{{ e.chipIcon }}" style="font-size:17px;margin-top:1px"></i><span>{{ e.blocker }}</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;font:600 13px Figtree">
+<span style="color:{{ e.clientFg }}">{{ e.clientLine }}</span>
+<sc-if value="{{ e.attention }}"><span style="display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;background:#E36E55;color:#fff">Needs attention</span></sc-if>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:18px">
+<div style="padding:22px;border-radius:22px;background:#FFFDF9;border:1px solid #EADFCF">
+<h3 style="margin:0;font:500 20px Newsreader,serif">Who we're waiting on</h3>
+<div style="margin-top:16px;display:flex;flex-direction:column;gap:14px">
+<sc-for list="{{ waiting }}" as="w" hint-placeholder-count="4">
+<div><div style="display:flex;justify-content:space-between;font:500 14px Figtree"><span>{{ w.label }}</span><b>{{ w.n }}</b></div><div style="margin-top:6px;height:8px;border-radius:99px;background:#F1E8DA"><div style="width:{{ w.pct }}%;height:100%;border-radius:99px;background:{{ w.color }}"></div></div></div>
+</sc-for>
+</div>
+</div>
+<div style="padding:22px;border-radius:22px;background:#EEDFEA;color:#3E1F3B">
+<div style="display:flex;align-items:center;gap:8px;font:600 13px Figtree;letter-spacing:.04em;text-transform:uppercase;color:#5B2E57"><i class="ph-fill ph-sparkle" style="font-size:16px"></i>Assistant · for your review</div>
+<p style="margin:10px 0 0;font:16px/1.45 Figtree">3 letters drafted overnight and 5 documents read. Nothing is sent until you approve it.</p>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;font:500 14px Figtree">
+<div style="padding:10px 12px;border-radius:12px;background:#FFFDF9">Chaser to Barclays · Ellis</div>
+<div style="padding:10px 12px;border-radius:12px;background:#FFFDF9">Pension claim to Aviva · Asante</div>
+<div style="padding:10px 12px;border-radius:12px;background:#FFFDF9">IHT400 query reply · Mehta</div>
+</div>
+<a href="Waymark - Solicitor Workspace.dc.html" style="margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border-radius:12px;background:#5B2E57;color:#FBF6EE;font:600 14px Figtree;text-decoration:none">Review drafts<i class="ph-bold ph-arrow-right"></i></a>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Foundations · colour, type, core components</div>
+<div class="dv-card" style="width:1240px;padding:48px;box-sizing:border-box;display:flex;flex-direction:column;gap:44px">
+<div>
+<div style="font:600 12px Figtree;letter-spacing:.08em;text-transform:uppercase;color:#7A6D63">Colour</div>
+<div style="margin-top:16px;display:grid;grid-template-columns:repeat(8,1fr);gap:12px">
+<sc-for list="{{ swatches }}" as="c" hint-placeholder-count="8">
+<div><div style="height:92px;border-radius:18px;background:{{ c.hex }};border:1px solid rgba(43,33,28,.08)"></div><div style="margin-top:10px;font:600 14px Figtree">{{ c.name }}</div><div style="font:12px ui-monospace,Menlo,monospace;color:#7A6D63">{{ c.code }}</div><div style="margin-top:4px;font:13px/1.35 Figtree;color:#5E524A">{{ c.use }}</div></div>
+</sc-for>
+</div>
+<div style="margin-top:18px;height:72px;border-radius:18px;background:linear-gradient(100deg,#FCE6C9 0%,#F8CDB8 40%,#EFC9D6 75%,#E3D7E8 100%);display:flex;align-items:center;padding:0 22px;font:500 14px Figtree;color:#4A3F38">Sunrise — hero moments only (journey header, welcome, milestones). Never behind body text smaller than 17px.</div>
+</div>
+<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:40px">
+<div>
+<div style="font:600 12px Figtree;letter-spacing:.08em;text-transform:uppercase;color:#7A6D63">Type · Newsreader + Figtree</div>
+<div style="margin-top:16px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:baseline;gap:18px"><span style="width:90px;flex:none;font:12px ui-monospace,monospace;color:#7A6D63">Display 40</span><span style="font:400 40px/1.1 Newsreader,serif;letter-spacing:-.015em">We'll take this one step at a time</span></div>
+<div style="display:flex;align-items:baseline;gap:18px"><span style="width:90px;flex:none;font:12px ui-monospace,monospace;color:#7A6D63">Title 25</span><span style="font:500 25px Newsreader,serif">Let's list what Margaret owned</span></div>
+<div style="display:flex;align-items:baseline;gap:18px"><span style="width:90px;flex:none;font:12px ui-monospace,monospace;color:#7A6D63">Body 17</span><span style="font:17px/1.5 Figtree">Plain, kind sentences. Body never below 16px on mobile.</span></div>
+<div style="display:flex;align-items:baseline;gap:18px"><span style="width:90px;flex:none;font:12px ui-monospace,monospace;color:#7A6D63">Label 13</span><span style="font:600 13px Figtree;letter-spacing:.06em;text-transform:uppercase;color:#0E5F5B">Stage 3 · You are here</span></div>
+</div>
+</div>
+<div>
+<div style="font:600 12px Figtree;letter-spacing:.08em;text-transform:uppercase;color:#7A6D63">Status badges</div>
+<div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px">
+<span style="display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:99px;background:#DCEDE9;color:#0E5F5B;font:600 14px Figtree"><i class="ph-bold ph-check"></i>Done</span>
+<span style="display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:99px;background:#FBE0D8;color:#A83E28;font:600 14px Figtree"><span style="width:8px;height:8px;border-radius:50%;background:#E36E55"></span>You are here</span>
+<span style="display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:99px;background:#FBEBCF;color:#8A5508;font:600 14px Figtree"><i class="ph-bold ph-hand-waving"></i>Waiting on you</span>
+<span style="display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:99px;background:#EEDFEA;color:#5B2E57;font:600 14px Figtree"><i class="ph-bold ph-buildings"></i>Waiting on Barclays</span>
+<span style="display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:99px;background:#E36E55;color:#fff;font:600 14px Figtree">Needs attention</span>
+<span style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;border:1.5px dashed #5B2E57;color:#5B2E57;font:600 14px Figtree"><i class="ph-fill ph-sparkle"></i>AI draft · needs review</span>
+<span style="display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:99px;background:#F1E8DA;color:#5E524A;font:600 14px Figtree">Later</span>
+</div>
+<div style="margin-top:24px;font:600 12px Figtree;letter-spacing:.08em;text-transform:uppercase;color:#7A6D63">Buttons · 56px mobile, 44px desktop</div>
+<div style="margin-top:14px;display:flex;gap:10px">
+<span style="height:56px;padding:0 24px;border-radius:18px;background:#0E5F5B;color:#FFFDF9;display:flex;align-items:center;font:600 17px Figtree">Begin</span>
+<span style="height:56px;padding:0 24px;border-radius:18px;background:#FFFDF9;border:1.5px solid #CFC2AF;display:flex;align-items:center;font:600 17px Figtree;box-sizing:border-box">Not right now</span>
+<span style="height:56px;padding:0 12px;display:flex;align-items:center;font:600 17px Figtree;color:#0E5F5B;text-decoration:underline;text-underline-offset:4px">What does this mean?</span>
+</div>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:360px 1fr;gap:40px">
+<div>
+<div style="font:600 12px Figtree;letter-spacing:.08em;text-transform:uppercase;color:#7A6D63">Task card</div>
+<div style="margin-top:16px;padding:22px;border-radius:28px;background:#FFFDF9;box-shadow:0 12px 30px -14px rgba(120,60,40,.3);border:1px solid #F1E8DA">
+<span style="padding:5px 11px;border-radius:99px;background:#FBE0D8;color:#A83E28;font:600 13px Figtree">Today's step</span>
+<h4 style="margin:14px 0 0;font:500 23px/1.2 Newsreader,serif">Find Margaret's will</h4>
+<p style="margin:8px 0 0;font:16px/1.5 Figtree;color:#5E524A">The original is best. If it's with a bank or another solicitor, just tell us where.</p>
+<div style="margin-top:16px;height:56px;border-radius:18px;background:#0E5F5B;color:#FFFDF9;display:flex;align-items:center;justify-content:center;font:600 17px Figtree">I've found it</div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:28px">
+<div>
+<div style="font:600 12px Figtree;letter-spacing:.08em;text-transform:uppercase;color:#7A6D63">Progress path · compact (used on cards, desktop headers)</div>
+<div style="margin-top:20px;position:relative;height:56px">
+<svg width="100%" height="56" viewBox="0 0 800 56" preserveAspectRatio="none" style="position:absolute;inset:0"><path d="M20,28 C80,4 120,52 150,28 S240,4 280,28 S370,52 410,28 S500,4 540,28 S630,52 670,28 S760,4 780,28" fill="none" stroke="#EADFCF" stroke-width="8" stroke-linecap="round"></path><path d="M20,28 C80,4 120,52 150,28 S240,4 280,28 S370,52 410,28" fill="none" stroke="url(#hpg)" stroke-width="8" stroke-linecap="round"></path></svg>
+<div style="position:absolute;inset:0;display:flex;justify-content:space-between;align-items:center;padding:0 2px">
+<span style="width:36px;height:36px;border-radius:50%;background:#0E5F5B;color:#fff;display:grid;place-items:center"><i class="ph-bold ph-check"></i></span>
+<span style="width:36px;height:36px;border-radius:50%;background:#0E5F5B;color:#fff;display:grid;place-items:center"><i class="ph-bold ph-check"></i></span>
+<span style="width:36px;height:36px;border-radius:50%;background:#E36E55;color:#fff;display:grid;place-items:center;font:700 14px Figtree;box-shadow:0 0 0 7px rgba(227,110,85,.2)">3</span>
+<span style="width:36px;height:36px;border-radius:50%;background:#FFFDF9;border:2px solid #CFC2AF;color:#5E524A;display:grid;place-items:center;font:600 14px Figtree;box-sizing:border-box">4</span>
+<span style="width:36px;height:36px;border-radius:50%;background:#FFFDF9;border:2px solid #CFC2AF;color:#5E524A;display:grid;place-items:center;font:600 14px Figtree;box-sizing:border-box">5</span>
+<span style="width:36px;height:36px;border-radius:50%;background:#FFFDF9;border:2px solid #CFC2AF;color:#5E524A;display:grid;place-items:center;font:600 14px Figtree;box-sizing:border-box">6</span>
+<span style="width:36px;height:36px;border-radius:50%;background:#FFFDF9;border:2px solid #CFC2AF;color:#5E524A;display:grid;place-items:center;font:600 14px Figtree;box-sizing:border-box">7</span>
+</div>
+</div>
+</div>
+<div>
+<div style="font:600 12px Figtree;letter-spacing:.08em;text-transform:uppercase;color:#7A6D63">Document tile · needed / being checked / accepted</div>
+<div style="margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+<div style="padding:18px;border-radius:22px;border:2px dashed #CFC2AF;background:#FBF6EE;display:flex;flex-direction:column;gap:10px"><i class="ph ph-scroll" style="font-size:28px;color:#8A5508"></i><div style="font:600 16px Figtree">The will</div><div style="font:14px Figtree;color:#5E524A">Still needed</div><div style="display:flex;gap:8px;margin-top:4px"><span style="flex:1;height:44px;border-radius:14px;background:#0E5F5B;color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font:600 14px Figtree"><i class="ph ph-camera"></i>Photo</span><span style="flex:1;height:44px;border-radius:14px;border:1.5px solid #CFC2AF;display:flex;align-items:center;justify-content:center;gap:6px;font:600 14px Figtree;box-sizing:border-box"><i class="ph ph-upload-simple"></i>File</span></div></div>
+<div style="padding:18px;border-radius:22px;background:#FFFDF9;border:1px solid #F3D9A6;display:flex;flex-direction:column;gap:10px"><div style="height:62px;border-radius:12px;background:repeating-linear-gradient(135deg,#F6EEE1 0 8px,#EFE4D3 8px 16px);display:grid;place-items:center;font:11px ui-monospace,monospace;color:#7A6D63">bank letter scan</div><div style="font:600 16px Figtree">Barclays letter</div><span style="align-self:flex-start;padding:5px 10px;border-radius:99px;background:#FBEBCF;color:#8A5508;font:600 13px Figtree">Priya is checking</span></div>
+<div style="padding:18px;border-radius:22px;background:#FFFDF9;border:1px solid #BFDCD5;display:flex;flex-direction:column;gap:10px"><div style="height:62px;border-radius:12px;background:repeating-linear-gradient(135deg,#E9F2EF 0 8px,#DCEDE9 8px 16px);display:grid;place-items:center;font:11px ui-monospace,monospace;color:#3D6B66">certificate scan</div><div style="font:600 16px Figtree">Death certificate</div><span style="align-self:flex-start;display:flex;gap:5px;align-items:center;padding:5px 10px;border-radius:99px;background:#DCEDE9;color:#0E5F5B;font:600 13px Figtree"><i class="ph-bold ph-check"></i>All good</span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: "make the path in <a class="dv-oid" href="#1a">1a</a> more botanical, like a vine" · "dashboard <a class="dv-oid" href="#1b">1b</a> as a dense table view" · "a darker evening mode for late-night reading"</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;currentStage&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:2,&quot;min&quot;:0,&quot;max&quot;:6,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Journey&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Journey&quot;}}">
+class Component extends DCLogic {
+  state = { filter: 'attention', termOpen: false };
+  pathRef = React.createRef();
+  componentDidMount() { this.animate(); }
+  componentDidUpdate(prev) { if (prev.currentStage !== this.props.currentStage) this.animate(); }
+  animate() {
+    const p = this.pathRef.current; if (!p || this.props.reduceMotion) return;
+    const L = p.getTotalLength(); if (!L) return;
+    p.style.transition = 'none'; p.style.strokeDasharray = L; p.style.strokeDashoffset = L;
+    p.getBoundingClientRect();
+    p.style.transition = 'stroke-dashoffset 1.8s cubic-bezier(.45,0,.2,1) .3s'; p.style.strokeDashoffset = 0;
+  }
+  renderVals() {
+    const cur = Math.max(0, Math.min(6, this.props.currentStage ?? 2));
+    const titles = ['Register the death','Gather documents','Value the estate','Inheritance Tax','Apply for probate','Collect assets & pay debts','Distribute the estate'];
+    const doneDates = ['Done 2 June','Done 18 July','Done 9 October','Done November','Done January','Done March','Complete'];
+    const later = ['','','Usually 6 to 8 weeks','Expected Oct to Nov','Expected Dec to Feb','Expected Feb to Apr','Expected spring 2027'];
+    const pts = titles.map((_, i) => [i % 2 ? 286 : 56, 50 + i * 135]);
+    let fullD = `M${pts[0][0]},${pts[0][1]}`, progD = fullD;
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+      const seg = ` C${x0},${y0 + 70} ${x1},${y1 - 70} ${x1},${y1}`;
+      fullD += seg; if (i <= cur) progD += seg;
+    }
+    if (cur === 0) progD += ' l0,0.1';
+    const stages = titles.map((t, i) => {
+      const done = i < cur, now = i === cur, left = i % 2 === 0;
+      return {
+        num: i + 1, title: t, done, notDone: !done,
+        nx: pts[i][0], ny: pts[i][1],
+        cx: left ? 92 : 4, cy: pts[i][1] - 40, cw: 246, align: left ? 'left' : 'right',
+        eyebrow: done ? 'Done' : now ? 'You are here' : i === cur + 1 ? 'Up next' : `Stage ${i + 1}`,
+        eyebrowFg: done ? '#0E5F5B' : now ? '#A83E28' : '#7A6D63',
+        meta: done ? doneDates[i] : now ? 'Usually 6 to 8 weeks · 1 thing for you' : later[i] || 'Later',
+        cardBg: now ? '#FFFDF9' : 'rgba(251,246,238,.94)',
+        cardBorder: now ? '1.5px solid #E36E55' : '1px solid transparent',
+        cardShadow: now ? '0 12px 28px -12px rgba(227,110,85,.45)' : 'none',
+        nodeBg: done ? '#0E5F5B' : now ? '#E36E55' : '#FFFDF9',
+        nodeFg: done || now ? '#fff' : '#5E524A',
+        nodeBorder: done || now ? '4px solid #FBF6EE' : '2px solid #CFC2AF',
+        nodeShadow: now ? '0 0 0 9px rgba(227,110,85,.18)' : 'none'
+      };
+    });
+
+    const E = [
+      { name:'Margaret Ellis', ref:'HRT-0412', client:'Sarah Ellis', st:2, days:96, w:'bank', blocker:'Waiting on Barclays for a valuation · 21 days', ci:2, att:true, earner:'PS' },
+      { name:'Kwame Asante', ref:'HRT-0377', client:'Ama Asante', st:2, days:71, w:'bank', blocker:'Waiting on Aviva pension details · 33 days, overdue', ci:0, att:true, earner:'JT' },
+      { name:'Anil Mehta', ref:'HRT-0389', client:'Ravi Mehta', st:3, days:140, w:'hmrc', blocker:'HMRC query on IHT400 · reply due in 12 days', ci:1, att:true, earner:'PS' },
+      { name:'Jean Whitfield', ref:'HRT-0421', client:'David Whitfield', st:1, days:34, w:'client', blocker:'Waiting on David for the original will', ci:3, att:true, earner:'LM' },
+      { name:'Harold Okafor', ref:'HRT-0398', client:'Grace Okafor', st:4, days:182, w:'registry', blocker:'Probate Registry · applied 6 weeks ago', ci:0, att:false, earner:'JT' },
+      { name:'Rosemary Pike', ref:'HRT-0365', client:'Neil Pike', st:4, days:155, w:'registry', blocker:'Probate Registry · applied 3 weeks ago', ci:1, att:false, earner:'LM' },
+      { name:'Thomas Reid', ref:'HRT-0430', client:'Moira Reid', st:0, days:8, w:'client', blocker:'Onboarding · Moira is adding family details', ci:4, att:false, earner:'PS' },
+      { name:'Brenda Lowe', ref:'HRT-0341', client:'Paul Lowe', st:5, days:260, w:'bank', blocker:'Nationwide closing accounts · 9 days', ci:0, att:false, earner:'JT' },
+      { name:'Eileen Morgan', ref:'HRT-0322', client:'Carys Morgan', st:6, days:301, w:'none', blocker:'On track · final estate accounts ready to share', ci:0, att:false, earner:'PS' }
+    ];
+    const chip = {
+      bank:['#EEDFEA','#5B2E57','ph ph-buildings'], hmrc:['#FBE0D8','#A83E28','ph ph-bank'],
+      registry:['#DCEDE9','#0E5F5B','ph ph-gavel'], client:['#FBEBCF','#8A5508','ph ph-hand-waving'], none:['#DCEDE9','#0E5F5B','ph ph-check-circle']
+    };
+    const earnerBg = { PS:'#E36E55', JT:'#5B2E57', LM:'#0E5F5B' };
+    const isThird = e => ['bank','hmrc','registry'].includes(e.w);
+    const f = this.state.filter;
+    const pass = e => f === 'all' || (f === 'attention' && e.att) || (f === 'client' && e.ci > 0) || (f === 'third' && isThird(e));
+    const estates = E.filter(pass).map(e => ({
+      ...e, stageName: `${e.st + 1}. ${titles[e.st]}`,
+      segs: titles.map((_, i) => ({ bg: i < e.st ? '#0E5F5B' : i === e.st ? '#E36E55' : '#EADFCF' })),
+      chipBg: chip[e.w][0], chipFg: chip[e.w][1], chipIcon: chip[e.w][2],
+      clientLine: e.ci ? `${e.ci} item${e.ci > 1 ? 's' : ''} with ${e.client.split(' ')[0]}` : 'Nothing with the family',
+      clientFg: e.ci ? '#8A5508' : '#7A6D63', attention: e.att,
+      border: e.att ? '#F2BFB2' : '#EADFCF', earnerBg: earnerBg[e.earner]
+    }));
+    const tabDefs = [
+      ['attention','Needs attention','#E36E55', E.filter(e => e.att).length],
+      ['client','Waiting on family','#E3A13A', E.filter(e => e.ci > 0).length],
+      ['third','Waiting on others','#5B2E57', E.filter(isThird).length],
+      ['all','All active','#0E5F5B', E.length]
+    ];
+    const tabs = tabDefs.map(([id, label, dot, n]) => ({
+      label, dot, n, bg: f === id ? '#FFFDF9' : 'transparent', shadow: f === id ? '0 1px 3px rgba(43,33,28,.12)' : 'none',
+      select: () => this.setState({ filter: id })
+    }));
+    const wc = { client: E.filter(e => e.w === 'client' || e.ci > 0).length, bank: E.filter(e => e.w === 'bank').length, hmrc: E.filter(e => e.w === 'hmrc').length, registry: E.filter(e => e.w === 'registry').length };
+    const max = Math.max(...Object.values(wc));
+    const waiting = [
+      ['Families', wc.client, '#E3A13A'], ['Banks & pensions', wc.bank, '#5B2E57'], ['Probate Registry', wc.registry, '#0E5F5B'], ['HMRC', wc.hmrc, '#E36E55']
+    ].map(([label, n, color]) => ({ label, n, color, pct: Math.round(n / max * 100) }));
+
+    const navItems = [['ph-fill ph-path','Journey'],['ph ph-folder-simple','Documents'],['ph ph-wallet','Assets'],['ph ph-chat-circle','Messages'],['ph ph-clock-counter-clockwise','Updates']];
+    const side = [['ph-fill ph-squares-four','Dashboard',0],['ph ph-folders','Estates',9],['ph ph-check-square','Tasks',14],['ph ph-files','Documents',0],['ph ph-envelope-simple','Letters',0],['ph ph-sparkle','AI drafts',3],['ph ph-gear','Settings',0]];
+
+    return {
+      fullD, progD, pathRef: this.pathRef, stages,
+      stageSummary: `${cur} of 7 done`,
+      termOpen: this.state.termOpen, toggleTerm: () => this.setState(s => ({ termOpen: !s.termOpen })),
+      nav: navItems.map(([icon, label], i) => ({ icon, label, fg: i === 0 ? '#0E5F5B' : '#7A6D63' })),
+      sideNav: side.map(([icon, label, count], i) => ({ icon, label, count: count || null, countBg: label === 'AI drafts' ? '#EFC9D6' : '#E3A13A', bg: i === 0 ? 'rgba(255,255,255,.1)' : 'transparent', fg: i === 0 ? '#FBF6EE' : '#BFD3CD' })),
+      tabs, estates, waiting,
+      swatches: [
+        { name:'Cream', hex:'#FBF6EE', code:'#FBF6EE', use:'Base' },
+        { name:'Paper', hex:'#FFFDF9', code:'#FFFDF9', use:'Cards' },
+        { name:'Ink', hex:'#2B211C', code:'#2B211C', use:'Text 14:1' },
+        { name:'Teal', hex:'#0E5F5B', code:'#0E5F5B', use:'Primary, done' },
+        { name:'Coral', hex:'#E36E55', code:'#E36E55 / #A83E28', use:'Now, attention' },
+        { name:'Amber', hex:'#E3A13A', code:'#E3A13A / #8A5508', use:'Waiting on family' },
+        { name:'Plum', hex:'#5B2E57', code:'#5B2E57', use:'Others, AI' },
+        { name:'Deep teal', hex:'#103F3C', code:'#103F3C', use:'Practice chrome' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
