@@ -25,9 +25,9 @@ jobs:
       - name: Pack
         run: |
           mkdir -p /tmp/devdeps
-          tar -cf - node_modules | zstd -T0 -12 -o /tmp/devdeps/node_modules.tar.zst
-          split -b 45m -d /tmp/devdeps/node_modules.tar.zst /tmp/devdeps/nm.part.
-          rm /tmp/devdeps/node_modules.tar.zst
+          tar -cf - node_modules | xz -T0 -6 > /tmp/devdeps/node_modules.tar.xz
+          split -b 45m -d /tmp/devdeps/node_modules.tar.xz /tmp/devdeps/nm.part.
+          rm /tmp/devdeps/node_modules.tar.xz
           cp package.json package-lock.json /tmp/devdeps/
           echo "${GITHUB_SHA}" > /tmp/devdeps/SOURCE_SHA
           ls -la /tmp/devdeps
