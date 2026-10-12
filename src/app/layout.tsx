@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Figtree, Newsreader } from "next/font/google";
-import { StoreProvider } from "@/lib/store";
 import "./globals.css";
 
 const newsreader = Newsreader({
@@ -30,9 +29,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-GB" className={`${newsreader.variable} ${figtree.variable}`}>
-      <body>
-        <StoreProvider>{children}</StoreProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

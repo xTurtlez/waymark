@@ -24,7 +24,7 @@ import {
 import { Cairn } from "@/components/brand/Cairn";
 import { Avatar } from "@/components/ui/primitives";
 import { Sheet } from "@/components/ui/Sheet";
-import { useDemo } from "@/lib/store";
+import { useDemo, useStore } from "@/lib/store";
 import { openTaskCount, pendingDrafts, staffById } from "@/lib/selectors";
 
 interface NavItem {
@@ -79,6 +79,27 @@ function FullNav({ onNavigate }: { onNavigate?: () => void }) {
         );
       })}
     </nav>
+  );
+}
+
+/** Demo: back to the demo chooser. Live: account security and sign out. */
+function ShellLinks({ className, onClick }: { className: string; onClick?: () => void }) {
+  const { mode } = useStore();
+  if (mode === "demo")
+    return (
+      <Link href="/" className={className} onClick={onClick}>
+        ← Demo home
+      </Link>
+    );
+  return (
+    <span className="flex flex-col gap-2">
+      <Link href="/account" className={className} onClick={onClick}>
+        Account and security
+      </Link>
+      <Link href="/sign-out" className={className} onClick={onClick}>
+        Sign out
+      </Link>
+    </span>
   );
 }
 
@@ -138,9 +159,7 @@ function Sidebar() {
       </Link>
       <FullNav />
       <div className="mt-auto flex flex-col gap-3">
-        <Link href="/" className="px-3 text-[13px] font-medium text-on-dark-3 no-underline hover:text-cream">
-          ← Demo home
-        </Link>
+        <ShellLinks className="px-3 text-[13px] font-medium text-on-dark-3 no-underline hover:text-cream" />
         <Me />
       </div>
     </aside>
@@ -162,9 +181,7 @@ function MobileBar() {
         <div className="on-dark -mx-2 rounded-[20px] bg-deep-teal p-3">
           <FullNav onNavigate={() => setOpen(false)} />
         </div>
-        <Link href="/" className="mt-4 inline-block text-sm font-semibold text-teal" onClick={() => setOpen(false)}>
-          ← Demo home
-        </Link>
+        <ShellLinks className="mt-4 inline-block text-sm font-semibold text-teal" onClick={() => setOpen(false)} />
       </Sheet>
     </div>
   );

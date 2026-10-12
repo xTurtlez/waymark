@@ -3,10 +3,18 @@
 import Link from "next/link";
 import { PiArrowRightBold, PiArrowCounterClockwiseBold, PiBriefcase, PiDeviceMobile, PiHandWaving } from "react-icons/pi";
 import { Cairn, Wordmark } from "@/components/brand/Cairn";
-import { useActions, useDemo } from "@/lib/store";
+import { StoreProvider, useActions, useDemo } from "@/lib/store";
 
-/** Demo entry: pick a side of the product. Replace with auth when there is a backend. */
-export default function Home() {
+/** Demo entry (GitHub Pages build): pick a side of the product. */
+export default function DemoHome() {
+  return (
+    <StoreProvider mode="demo">
+      <Home />
+    </StoreProvider>
+  );
+}
+
+function Home() {
   const state = useDemo();
   const { reset } = useActions();
   const firm = state.firm;

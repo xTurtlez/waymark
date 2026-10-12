@@ -18,7 +18,7 @@ import {
 } from "react-icons/pi";
 import { Cairn } from "@/components/brand/Cairn";
 import { clientParty } from "@/lib/selectors";
-import { useClientEstate, useDemo } from "@/lib/store";
+import { useClientEstate, useDemo, useStore } from "@/lib/store";
 
 const NAV: { href: string; label: string; icon: IconType; active: IconType }[] = [
   { href: "/portal", label: "Journey", icon: PiPath, active: PiPathFill },
@@ -68,6 +68,7 @@ export function PortalBrand({ className = "" }: { className?: string }) {
   const state = useDemo();
   const estate = useClientEstate();
   const me = clientParty(estate);
+  const { mode } = useStore();
   return (
     <div className={`flex items-center justify-between ${className}`}>
       <Link href="/portal" className="flex items-center gap-2 font-serif text-xl font-semibold tracking-[-0.01em] text-ink no-underline">
@@ -75,7 +76,7 @@ export function PortalBrand({ className = "" }: { className?: string }) {
         Waymark
         <span className="ml-0.5 font-sans text-[13px] font-medium text-ink-3">with {state.firm.shortName}</span>
       </Link>
-      <Link href="/" aria-label={`Signed in as ${me.name}. Demo home`} className="grid size-11 place-items-center rounded-full bg-paper text-[15px] font-semibold text-plum no-underline">
+      <Link href={mode === "demo" ? "/" : "/account"} aria-label={`Signed in as ${me.name}. ${mode === "demo" ? "Demo home" : "Account and sign out"}`} className="grid size-11 place-items-center rounded-full bg-paper text-[15px] font-semibold text-plum no-underline">
         {me.initials}
       </Link>
     </div>

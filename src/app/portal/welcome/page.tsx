@@ -6,7 +6,7 @@ import { PiArrowLeftBold, PiArrowRightBold, PiCheckBold, PiCheckCircleFill } fro
 import { Cairn } from "@/components/brand/Cairn";
 import { Avatar } from "@/components/ui/primitives";
 import { clientParty, feeEarner, firstName } from "@/lib/selectors";
-import { useActions, useClientEstate, useDemo } from "@/lib/store";
+import { useActions, useClientEstate, useDemo, useStore } from "@/lib/store";
 
 const RELATIONSHIPS = ["Mum or dad", "Partner", "Brother or sister", "Friend", "Someone else"];
 const ROLES = [
@@ -23,6 +23,7 @@ export default function Welcome() {
   const state = useDemo();
   const estate = useClientEstate();
   const { completeOnboarding } = useActions();
+  const { mode } = useStore();
   const me = clientParty(estate);
   const sol = feeEarner(state, estate);
   const solFirst = firstName(sol.name);
@@ -238,9 +239,11 @@ export default function Welcome() {
             <Link href="/portal" className={`${primary} mt-auto flex items-center justify-center gap-2.5 no-underline`}>
               See your path <PiArrowRightBold aria-hidden />
             </Link>
+            {mode === "demo" && (
             <button type="button" onClick={() => setStep(0)} className="mt-2.5 h-12 border-0 bg-transparent text-[15px] font-semibold text-ink-3">
               Start the demo again
             </button>
+            )}
           </div>
         </>
       )}

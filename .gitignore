@@ -5,3 +5,8 @@ out
 next-env.d.ts
 .env*.local
 .DS_Store
+.data
+.env
+/test-results
+/playwright-report
+/coverage
