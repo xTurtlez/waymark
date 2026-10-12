@@ -21,7 +21,7 @@ jobs:
           node-version: 22.22.0
       - name: Install
         run: |
-          if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+          if [ -f package-lock.json ]; then .github/scripts/run.sh install npm ci --no-audit --no-fund; else .github/scripts/run.sh install npm install --no-audit --no-fund; fi
       - name: Pack
         run: |
           mkdir -p /tmp/devdeps
