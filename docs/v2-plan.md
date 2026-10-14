@@ -39,6 +39,26 @@ Working from the v2 brief (`claude/v2-build-prompt.md` in the Waymark project) a
 
 Full domain model (M2), rules engine (M3), transactions (M4), IDV, signatures and quiet hours (M5), model-backed AI (M6), PDFs (M7), branding and metrics (M8).
 
+## Milestone 2: Real data model
+
+**Goal:** the estate record lives in proper tables with real dates. Stage, waiting-on, the blocker line and needs-attention are derived, never stored or typed in.
+
+### Decisions
+
+| Area | Decision | Why |
+|---|---|---|
+| Tables | `estate` (deceased details, service level, status, fee estimate), `estate_party` (+ key, primary, IDV status), `estate_staff`, `milestone`, `will`, `will_gift`, `institution` (shared, read-only to the app), `holding`, `ledger_entry`, `task`, `document`, `extraction`, `draft`, `missing_item`, `message`, `client_update`, `note`. Every tenant row carries `firm_id` + `estate_id` and a per-estate `key` (the id the screens use). | Matches the brief's domain model. The keys keep URLs and the shared reducer stable. |
+| Business logic | One pure reducer (`src/lib/reducer.ts`) for both builds. The live server action runs it inside the tenant transaction, then `saveEstate()` writes only the rows that changed. `loadEstates()` assembles the screens' shape from the tables. | Demo and live can't drift; every action still runs server-side under RLS. The Transaction Engine (M4) adds server-only domain services alongside. |
+| Dates | Calendar days as `date`, moments as `timestamptz`; ISO strings in the app. "Today", "Fri" and "3 weeks, overdue" are computed in UK time (`src/lib/format.ts`), so labels match on a UTC server and a phone in Bath. | Brief: no display strings in the database. |
+| Derived values | `src/lib/derive.ts`: stage = first milestone not reached; waiting-on = the most urgent open third-party task (overdue first, then earliest due), else the family, else none; attention = something overdue, an HMRC deadline within 14 days, or a family task open over 28 days. Holding status wording and journey timing are derived the same way. | One tested place; the dashboard, cards and portal all agree. |
+| Audit trail on screen | Read from `audit_event` (the real hash-chained log), latest 50 per estate, firm scope only. Each action writes one event with row-level before/after. | No second, editable copy of history. |
+| Visibility | Families: their estate's holdings, documents, messages, updates, milestones and their own tasks. They may create a "please check my upload" task for the firm. Firm-only: notes, drafts, extractions, missing items, will, ledger, audit. No DELETE grants on estate tables. | Least privilege in the database, proven by tests. |
+| Migrations | Pre-release, the M1 migrations were folded into a clean baseline (`0000_init` generated + `0001_security` hand-written). Nothing had been deployed. | Avoids a rename migration before launch. From the first production deploy, migrations are append-only. |
+| Demo freshness | The seed is built relative to "now", so the demo always reads the same (Barclays three weeks late, valuation in five days). | Real dates without a stale demo. |
+
+### Deliverables
+Schema + RLS for every new table; `estate-store.ts` (load/save); derived fields everywhere; seed rewritten onto the same save path; tests: date helpers, derivation, reducer, full save→load round trip, family visibility and write limits, no deletes, RLS on every `firm_id` table.
+
 ## Later milestones
 
 Follow the brief's section 12 order. Each ends green in CI. Uncertain legal or tax rules go to `docs/open-legal-questions.md` as solicitor-confirmed flags rather than guesses.

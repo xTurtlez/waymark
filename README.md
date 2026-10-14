@@ -4,7 +4,10 @@ Probate software for law firms in England & Wales. Firms license it; executors a
 
 > Waymark is a software product, not a law firm. It does not give legal advice or hold client money. Solicitors stay responsible for everything that leaves the system.
 
-**Status: v2 in progress** (branch `v2`, plan in `docs/v2-plan.md`). Milestone 1 (Foundation) is built: real database, accounts, row-level security, audit log, file storage and job queue under the v1 screens. Later milestones (Transaction Engine, rules engine, executor flow, Exceptions inbox, AI, outputs) follow the brief's order.
+**Status: v2 in progress** (branch `v2`, plan in `docs/v2-plan.md`).
+- Milestone 1 (Foundation): real database, accounts, row-level security, audit log, file storage, job queue.
+- Milestone 2 (Real data model): the estate record in proper tables with real dates; stage, waiting-on and attention derived.
+- Next: the tax rules engine and IHT workspace (M3), then the Transaction Engine, executor flow, Exceptions inbox and AI, and outputs.
 
 ## Two builds from one codebase
 
@@ -24,9 +27,10 @@ Files named `*.live.tsx` / `*.demo.tsx` are mode-specific (picked by `pageExtens
 - **Audit log.** `audit_event` is append-only (enforced by trigger and grants) and hash-chained per firm. `audit_verify()` recomputes the chain nightly. Every action records actor, time, IP, user agent and before/after values.
 - **Files.** Uploads are checked by content (not file extension), size-capped, hashed (SHA-256) and malware-scanned before storage. Storage is S3 in `eu-west-2` with server-side encryption (local disk in development), served through access-checked routes.
 - **Jobs.** A Postgres-backed queue: each job runs once even with several workers, retries back off, and duplicates are dropped. A Vercel cron drives it.
-- **Screens.** Every v1 screen (practice dashboard, estate workspace with assistant panel, client portal) runs on the database through one audited server action.
+- **The estate record.** Parties, staff, milestones, will and gifts, holdings, ledger, tasks, documents, extractions, drafts, messages, client updates and notes each have their own table. Every v1 screen reads and writes them through one audited server action.
+- **Real dates.** Dates are stored as dates and timestamps; "Today", "Fri" and "3 weeks, overdue" are worked out on screen in UK time. Stage, who we're waiting on, the blocker line and needs-attention are derived from milestones and tasks, never typed in.
 
-Still to come in later milestones: the full domain model (M2), the tax rules engine (M3), the Transaction Engine (M4), the executor flow (M5), the Exceptions inbox and model-backed AI (M6), and PDFs and outputs (M7). Until M2, part of each estate's detail is stored as JSON on the estate row.
+Still to come: the tax rules engine (M3), the Transaction Engine (M4), the executor flow (M5), the Exceptions inbox and model-backed AI (M6), and PDFs and outputs (M7).
 
 ## Run it locally
 
@@ -69,8 +73,8 @@ src/
   app/            Routes. *.live.tsx = live only, *.demo.tsx = demo only
   components/     UI (brand, ui primitives, practice, portal, auth, shared)
   db/             Drizzle schema and client (withTenant, admin connection)
-  lib/            Shared client logic: reducer, store, selectors, assistant seam, types
-  server/         Server-only: actions, auth, audit, files, jobs, mail, viewer, env
+  lib/            Shared logic: reducer, derive (stage, waiting-on...), dates, store, selectors, types
+  server/         Server-only: actions, estate-store (load/save), auth, audit, files, jobs, mail, viewer, env
 scripts/          migrate, seed, reset, runtime-role, e2e-db
 drizzle/          SQL migrations (generated + hand-written roles, RLS, triggers)
 tests/            Vitest unit and database tests
