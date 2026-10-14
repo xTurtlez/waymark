@@ -1,0 +1,41 @@
+name: Production database
+
+# Run by hand from the Actions tab. Applies migrations to the production
+# database and sets the runtime role's password; optionally loads the demo firms.
+# Needs repository secrets: DATABASE_ADMIN_URL (owner connection string) and
+# RUNTIME_DB_PASSWORD (the password the app's DATABASE_URL uses).
+on:
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: "Also load the demo firms (Ellis & Rowe, Hartley Moss). Only for a demo or pilot sandbox."
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Migrate and set runtime role
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_ADMIN_URL }}
+          RUNTIME_DB_PASSWORD: ${{ secrets.RUNTIME_DB_PASSWORD }}
+        run: |
+          .github/scripts/run.sh "Migrate" npx tsx scripts/migrate.ts
+          .github/scripts/run.sh "Runtime role" npx tsx scripts/runtime-role.ts
+      - name: Seed demo firms
+        if: ${{ inputs.seed }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_ADMIN_URL }}
+          SEED_STAFF_PASSWORD: ${{ secrets.SEED_STAFF_PASSWORD }}
+        run: .github/scripts/run.sh "Seed" npx tsx scripts/seed.ts
