@@ -13,11 +13,11 @@ export async function makeFirm(label: string) {
   const estates = await db
     .insert(schema.estate)
     .values([
-      { firmId: firm.id, ref: `${tag}-1`, slug: `${tag}-one`, deceasedFullName: "One", workspace: {} },
-      { firmId: firm.id, ref: `${tag}-2`, slug: `${tag}-two`, deceasedFullName: "Two", workspace: {} },
+      { firmId: firm.id, ref: `${tag}-1`, slug: `${tag}-one`, deceasedFullName: "One Person", deceasedFirstName: "One", deceasedShortName: "One Person" },
+      { firmId: firm.id, ref: `${tag}-2`, slug: `${tag}-two`, deceasedFullName: "Two Person", deceasedFirstName: "Two", deceasedShortName: "Two Person" },
     ])
     .returning();
-  await db.insert(schema.estateParty).values({ firmId: firm.id, estateId: estates[0].id, userId: familyUser, role: "executor", fullName: "Exec" });
+  await db.insert(schema.estateParty).values({ firmId: firm.id, estateId: estates[0].id, key: "p_exec", userId: familyUser, role: "executor", isPrimary: true, fullName: "Exec", initials: "EX" });
   return { firm, membership: m, staffUser, familyUser, estates };
 }
 
