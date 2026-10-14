@@ -22,8 +22,14 @@ export function AccountSecurity({ totpEnabled, isStaff }: { totpEnabled: boolean
     if (res.data) setPasskeys(res.data as PasskeyRow[]);
   }, []);
   useEffect(() => {
-    void loadPasskeys();
-  }, [loadPasskeys]);
+    let live = true;
+    authClient.passkey.listUserPasskeys().then((res) => {
+      if (live && res.data) setPasskeys(res.data as PasskeyRow[]);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
 
   async function startTotp(e: React.FormEvent) {
     e.preventDefault();

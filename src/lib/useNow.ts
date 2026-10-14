@@ -1,14 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
-/** Current time, set after mount so server and client markup match. */
+/**
+ * Current time, ticking each minute. Null during server render and hydration
+ * so server and client markup match.
+ */
+let snapshot: Date | null = null;
+
+function subscribe(onChange: () => void) {
+  const t = window.setInterval(() => {
+    snapshot = new Date();
+    onChange();
+  }, 60_000);
+  return () => window.clearInterval(t);
+}
+
+function getSnapshot(): Date {
+  if (!snapshot || Date.now() - snapshot.getTime() >= 60_000) snapshot = new Date();
+  return snapshot;
+}
+
 export function useNow(): Date | null {
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => {
-    setNow(new Date());
-    const t = window.setInterval(() => setNow(new Date()), 60_000);
-    return () => window.clearInterval(t);
-  }, []);
-  return now;
+  return useSyncExternalStore(subscribe, getSnapshot, () => null);
+}
+
+const noop = () => () => {};
+/** True once the component is running in the browser after hydration. */
+export function useHydrated(): boolean {
+  return useSyncExternalStore(noop, () => true, () => false);
 }

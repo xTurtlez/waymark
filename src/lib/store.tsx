@@ -1,5 +1,7 @@
 "use client";
 
+import { useHydrated } from "./useNow";
+
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, useTransition } from "react";
 import type { AssetKind, DemoState, Estate, TaskOwner } from "./types";
 import { SEED_VERSION, freshSeed } from "./seed";
@@ -64,12 +66,15 @@ export function StoreProvider({
   apply?: ApplyAction;
 }) {
   const [state, rawDispatch] = useReducer(internalReducer, initial, (i) => i ?? freshSeed());
-  const [ready, setReady] = useState(mode === "live");
+  const hydrated = useHydrated();
+  const ready = mode === "live" || hydrated;
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const skipSave = useRef(true);
   const latest = useRef(state);
-  latest.current = state;
+  useEffect(() => {
+    latest.current = state;
+  }, [state]);
 
   // Live: when the server sends a new initial state (navigation / refresh), adopt it.
   useEffect(() => {
@@ -88,7 +93,6 @@ export function StoreProvider({
     } catch {
       /* storage unavailable: run from seed */
     }
-    setReady(true);
   }, [mode]);
 
   // Demo: persist, and pick up changes made in other tabs.

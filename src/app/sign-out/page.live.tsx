@@ -7,7 +7,8 @@ import { authClient } from "@/lib/auth-client";
 export default function SignOut() {
   useEffect(() => {
     authClient.signOut().finally(() => {
-      window.location.href = "/sign-in";
+      // Full navigation so no signed-in server state survives.
+      window.location.replace(new URL("/sign-in", window.location.origin).href);
     });
   }, []);
   return (

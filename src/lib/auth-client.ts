@@ -9,7 +9,7 @@ export const authClient = createAuthClient({
     twoFactorClient({
       onTwoFactorRedirect() {
         const next = new URLSearchParams(window.location.search).get("next");
-        window.location.href = `/sign-in/two-factor${next ? `?next=${encodeURIComponent(next)}` : ""}`;
+        window.location.assign(new URL(`/sign-in/two-factor${next ? `?next=${encodeURIComponent(next)}` : ""}`, window.location.origin).href);
       },
     }),
     magicLinkClient(),

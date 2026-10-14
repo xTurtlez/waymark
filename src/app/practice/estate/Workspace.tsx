@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { PiCaretRight, PiEye } from "react-icons/pi";
 import { AssistantPanel, type AiTab } from "@/components/practice/workspace/AssistantPanel";
 import { AuditCard, DocumentsCard, IhtCard, LedgerCard, MessagesCard, NotesCard, PartiesCard, TasksCard } from "@/components/practice/workspace/sections";
@@ -23,21 +23,30 @@ export function EstateWorkspace() {
   const id = params.get("id") ?? undefined;
   const state = useDemo();
   const estate = useEstate(id);
-  const [tab, setTab] = useState<Tab>("overview");
-  const [aiTab, setAiTab] = useState<AiTab>("draft");
-  const [focusDraft, setFocusDraft] = useState<string | undefined>();
   const [addOpen, setAddOpen] = useState(false);
 
-  // Deep links: ?id=<estate>&ai=draft&draft=<id>&tab=<tab>
+  // Deep links: ?id=<estate>&ai=draft&draft=<id>&tab=<tab>. Re-read whenever the
+  // query string changes (adjusting state during render, not in an effect).
   const qs = params.toString();
-  useEffect(() => {
+  const fromQuery = () => {
     const ai = params.get("ai");
-    if (ai === "draft" || ai === "extract" || ai === "missing" || ai === "summary") setAiTab(ai);
-    else setAiTab("draft");
-    setFocusDraft(params.get("draft") ?? undefined);
-    const t = params.get("tab");
-    setTab(t ? (t as Tab) : "overview");
-  }, [qs]);
+    return {
+      tab: (params.get("tab") as Tab | null) ?? "overview",
+      ai: (ai === "draft" || ai === "extract" || ai === "missing" || ai === "summary" ? ai : "draft") as AiTab,
+      draft: params.get("draft") ?? undefined,
+    };
+  };
+  const [tab, setTab] = useState<Tab>(() => fromQuery().tab);
+  const [aiTab, setAiTab] = useState<AiTab>(() => fromQuery().ai);
+  const [focusDraft, setFocusDraft] = useState<string | undefined>(() => fromQuery().draft);
+  const [seenQs, setSeenQs] = useState(qs);
+  if (qs !== seenQs) {
+    const q = fromQuery();
+    setSeenQs(qs);
+    setTab(q.tab);
+    setAiTab(q.ai);
+    setFocusDraft(q.draft);
+  }
 
   if (!estate) {
     return (
