@@ -1,6 +1,10 @@
 import { STAGES } from "./stages";
 import type { DemoState, Estate, Party, StaffMember, Task, WaitingOn } from "./types";
 import { money } from "./format";
+import { assetStatus } from "./derive";
+import { dueInfo } from "./format";
+
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 /** Nil-rate band and residence nil-rate band (2026/27). Stored in pence. */
 export const NRB_PENCE = 325_000_00;
@@ -96,7 +100,7 @@ export function estateSummary(state: DemoState, estate: Estate): { label: string
   const iht = ihtPosition(estate);
   const client = clientParty(estate);
   const fam = openFamilyTasks(estate);
-  const blocked = estate.tasks.filter((t) => !t.done && (t.overdue || t.owner.kind === "third"));
+  const blocked = estate.tasks.filter((t) => !t.done && (dueInfo(t.dueOn, false).overdue || t.owner.kind === "third"));
   const nextFirm = estate.tasks.filter((t) => !t.done && t.owner.kind === "firm").slice(0, 3);
   const house = estate.assets.find((a) => a.kind === "property");
   const out: { label: string; text: string }[] = [];
@@ -106,7 +110,7 @@ export function estateSummary(state: DemoState, estate: Estate): { label: string
       `Stage ${estate.stage + 1} of 7. ` +
       (iht.gross > 0
         ? `Gross estate about ${money(Math.round(iht.gross / 100_000) * 100_000).replace(",000", "k")}` +
-          (house ? `, mostly ${house.name.split(",")[0]} (${house.firmStatus.charAt(0).toLowerCase() + house.firmStatus.slice(1)}). ` : ". ") +
+          (house ? `, mostly ${house.name.split(",")[0]} (${lowerFirst(assetStatus(house, estate, "").firm)}). ` : ". ") +
           (iht.taxDue > 0 ? `IHT of roughly ${money(iht.taxDue)} likely.` : iht.hasHome ? "No IHT expected if RNRB applies." : "No IHT expected.")
         : "No assets recorded yet."),
   });

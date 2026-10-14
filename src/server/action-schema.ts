@@ -6,24 +6,25 @@ import type { Action } from "@/lib/reducer";
  * arbitrary input, so every field is checked before the reducer runs.
  */
 const idStr = z.string().min(1).max(80).regex(/^[A-Za-z0-9_-]+$/);
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const text = (max: number) => z.string().trim().min(1).max(max);
 const owner = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("firm"), staffId: idStr }),
   z.object({ kind: z.literal("family"), partyId: idStr }),
-  z.object({ kind: z.literal("third"), label: text(80) }),
+  z.object({ kind: z.literal("third"), label: text(80), category: z.enum(["bank", "hmrc", "registry", "other"]) }),
 ]);
 const assetKind = z.enum(["property", "bank", "savings", "bonds", "pension", "investment", "credit", "utility", "other"]);
 
 export const actionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("toggleTask"), estateId: idStr, taskId: idStr }),
-  z.object({ type: z.literal("addTask"), estateId: idStr, title: text(200), owner, due: text(40) }),
+  z.object({ type: z.literal("addTask"), estateId: idStr, title: text(200), owner, dueOn: isoDate.nullable() }),
   z.object({ type: z.literal("editDraft"), estateId: idStr, draftId: idStr, body: z.array(text(4000)).min(1).max(40) }),
   z.object({ type: z.literal("approveDraft"), estateId: idStr, draftId: idStr }),
   z.object({ type: z.literal("discardDraft"), estateId: idStr, draftId: idStr }),
   z.object({ type: z.literal("resolveMissing"), estateId: idStr, missingId: idStr }),
   z.object({ type: z.literal("acceptExtraction"), estateId: idStr, extractionId: idStr }),
   z.object({ type: z.literal("markDocChecked"), estateId: idStr, docId: idStr }),
-  z.object({ type: z.literal("uploadDocument"), estateId: idStr, docId: idStr.optional(), name: text(120), fileName: text(200) }),
+  z.object({ type: z.literal("uploadDocument"), estateId: idStr, docId: idStr.optional(), name: text(120), fileName: text(200), fileId: z.string().uuid().optional() }),
   z.object({
     type: z.literal("addAsset"),
     estateId: idStr,

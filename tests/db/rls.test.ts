@@ -37,7 +37,7 @@ describe("row-level security: firm scope", () => {
   });
 
   it("cross-firm inserts are rejected", async () => {
-    expect(await dbError(withTenant(staff(A), (tx) => tx.insert(schema.estate).values({ firmId: B.firm.id, ref: "x", slug: "x", deceasedFullName: "x", workspace: {} })))).toMatch(/row-level security/);
+    expect(await dbError(withTenant(staff(A), (tx) => tx.insert(schema.estate).values({ firmId: B.firm.id, ref: "x", slug: "x", deceasedFullName: "x", deceasedFirstName: "x", deceasedShortName: "x" })))).toMatch(/row-level security/);
   });
 
   it("raw SQL cannot escape the role or bypass policies", async () => {
@@ -70,7 +70,7 @@ describe("row-level security: portal scope", () => {
 
   it("cannot create estates", async () => {
     expect(
-      await dbError(withTenant(family(A), (tx) => tx.insert(schema.estate).values({ firmId: A.firm.id, ref: "y", slug: "y", deceasedFullName: "y", workspace: {} }))),
+      await dbError(withTenant(family(A), (tx) => tx.insert(schema.estate).values({ firmId: A.firm.id, ref: "y", slug: "y", deceasedFullName: "y", deceasedFirstName: "y", deceasedShortName: "y" }))),
     ).toMatch(/row-level security/);
   });
 

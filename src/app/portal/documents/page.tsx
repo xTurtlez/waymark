@@ -62,8 +62,8 @@ export default function Documents() {
     setUploading(true);
     setUploadError(null);
     try {
-      const stored = await uploadFile(file, { estateId: estate.id, documentKey: doc?.id });
-      uploadDocument(estate.id, docName, stored.fileName, doc?.id);
+      const stored = await uploadFile(file, { estateId: estate.id });
+      uploadDocument(estate.id, docName, stored.fileName, doc?.id, stored.fileId);
       if (url && doc) setThumbs((t) => ({ ...t, [doc.id]: url }));
       setPending(null);
       setTargetDoc(null);

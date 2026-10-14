@@ -5,22 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1791837956491,
+      "when": 1792011580513,
       "tag": "0000_init",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1791837960120,
+      "when": 1792011581454,
       "tag": "0001_security",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1792010415043,
-      "tag": "0002_rate_limit",
       "breakpoints": true
     }
   ]

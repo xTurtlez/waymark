@@ -10,6 +10,7 @@ import { AddAssetSheet } from "@/components/shared/AddAssetSheet";
 import { STAGES, segState } from "@/lib/stages";
 import { clientParty, feeEarner, firstName } from "@/lib/selectors";
 import { useDemo, useEstate } from "@/lib/store";
+import { fullDay } from "@/lib/format";
 
 type Tab = "overview" | "parties" | "assets" | "liabilities" | "documents" | "tasks" | "iht" | "notes" | "audit" | "messages";
 
@@ -79,7 +80,7 @@ export function EstateWorkspace() {
   const meta = [
     estate.ref,
     estate.deceased.dateOfDeath ? `Died ${formatDate(estate.deceased.dateOfDeath)}${estate.deceased.placeOfDeath ? `, ${estate.deceased.placeOfDeath}` : ""}` : "Date of death not yet recorded",
-    estate.deceased.willDated ? `Will dated ${estate.deceased.willDated}` : null,
+    estate.will ? `Will dated ${fullDay(estate.will.dated)}` : null,
     `${estate.daysOpen} days open`,
     `Fee earner ${earner.name}`,
   ].filter(Boolean) as string[];

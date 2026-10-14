@@ -7,6 +7,7 @@ import { DOC_FIRM, DOC_ICON } from "@/components/shared/assetMeta";
 import { btn } from "@/components/ui/primitives";
 import { useActions, useDemo } from "@/lib/store";
 import type { Estate, EstateDocument } from "@/lib/types";
+import { dayLabel } from "@/lib/format";
 
 type Item = { e: Estate; d: EstateDocument };
 
@@ -31,7 +32,7 @@ return (
                 </Link>
                 <div className={`mt-1 text-xs font-semibold ${st.text}`}>
                   {st.label}
-                  {d.uploadedAt ? ` · added ${d.uploadedAt}` : ""}
+                  {d.uploadedAt ? ` · added ${dayLabel(d.uploadedAt)}` : ""}
                 </div>
               </div>
             </div>

@@ -1,8 +1,9 @@
 import { hashPassword } from "better-auth/crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { closeDb, getAdminDb, schema } from "../src/db/client";
 import { freshSeed } from "../src/lib/seed";
 import type { Estate } from "../src/lib/types";
+import { saveEstate } from "../src/server/estate-store";
 import { enqueue } from "../src/server/jobs/queue";
 
 /**
@@ -49,6 +50,59 @@ function remapStaff<T>(value: T, map: Record<string, string>): T {
   return JSON.parse(JSON.stringify(value), (_k, v) => (typeof v === "string" && map[v] ? map[v] : v)) as T;
 }
 
+/** Write one estate (row, parties, every child record) and import its demo history into the audit log. */
+async function writeEstate(db: Db, firmId: string, e: Estate, users: { byPartyKey: Record<string, string>; byMembership: Record<string, string> }) {
+  await db.transaction(async (tx) => {
+    const estateUuid = crypto.randomUUID();
+    await tx.insert(schema.estate).values({
+      id: estateUuid,
+      firmId,
+      ref: e.ref,
+      slug: e.id,
+      deceasedFullName: e.deceased.fullName,
+      deceasedFirstName: e.deceased.firstName,
+      deceasedShortName: e.deceased.shortName,
+      feeEarnerId: e.feeEarnerId || null,
+      openedAt: new Date(e.openedAt),
+    });
+    await saveEstate(tx, { firmId, estateUuid, actorMembershipId: null, actorUserId: "seed" }, null, e);
+    // Link family members who have portal accounts.
+    for (const [key, userId] of Object.entries(users.byPartyKey)) {
+      await tx
+        .update(schema.estateParty)
+        .set({ userId, invitedAt: new Date(e.openedAt), acceptedAt: new Date(new Date(e.openedAt).getTime() + 9 * 3600_000) })
+        .where(and(eq(schema.estateParty.estateId, estateUuid), eq(schema.estateParty.key, key)));
+    }
+    // History, oldest first so the hash chain follows time.
+    const history = [...e.audit].sort((x, y) => (x.at < y.at ? -1 : 1));
+    await tx.insert(schema.auditEvent).values({
+      firmId,
+      estateId: estateUuid,
+      actorType: "system",
+      action: "seed.import",
+      entityType: "estate",
+      entityId: estateUuid,
+      summary: `Estate opened: ${e.deceased.fullName} (${e.ref})`,
+      createdAt: new Date(e.openedAt),
+    });
+    for (const h of history) {
+      const staffUser = users.byMembership[h.actor];
+      const familyUser = users.byPartyKey[h.actor];
+      await tx.insert(schema.auditEvent).values({
+        firmId,
+        estateId: estateUuid,
+        actorType: h.actor === "ai" ? "ai" : staffUser ? "staff" : familyUser ? "family" : "system",
+        actorUserId: staffUser ?? familyUser ?? null,
+        action: "seed.history",
+        entityType: "estate",
+        entityId: estateUuid,
+        summary: h.text,
+        createdAt: new Date(h.at),
+      });
+    }
+  });
+}
+
 async function seedEllisRowe(db: Db) {
   const seed = freshSeed();
   const [exists] = await db.select().from(schema.firm).where(eq(schema.firm.slug, "ellis-rowe"));
@@ -67,6 +121,7 @@ async function seedEllisRowe(db: Db) {
     { key: "s_lm", email: SEED_USERS.laura, role: "fee_earner" as const },
   ];
   const keyToMembership: Record<string, string> = {};
+  const membershipUser: Record<string, string> = {};
   for (const def of staffDefs) {
     const s = seed.staff.find((x) => x.id === def.key)!;
     const userId = await createUser(db, def.email, s.name, PASSWORD);
@@ -75,51 +130,13 @@ async function seedEllisRowe(db: Db) {
       .values({ firmId: firm.id, userId, role: def.role, title: s.role, initials: s.initials, color: s.color })
       .returning();
     keyToMembership[def.key] = m.id;
+    membershipUser[m.id] = userId;
   }
 
   const sarahId = await createUser(db, SEED_USERS.sarah, "Sarah Ellis");
-  let day = 0;
   for (const raw of seed.estates) {
     const e = remapStaff<Estate>(raw, keyToMembership);
-    const opened = new Date(Date.now() - e.daysOpen * 86_400_000 + day++ * 1000);
-    const [row] = await db
-      .insert(schema.estate)
-      .values({
-        firmId: firm.id,
-        ref: e.ref,
-        slug: e.id,
-        deceasedFullName: e.deceased.fullName,
-        dateOfDeath: e.deceased.dateOfDeath || null,
-        feeEarnerId: keyToMembership[raw.feeEarnerId] ?? null,
-        workspace: e,
-        openedAt: opened,
-      })
-      .returning();
-    for (const p of e.parties.filter((x) => x.role === "executor" || x.role === "beneficiary")) {
-      const isSarah = p.id === "p_sarah";
-      await db.insert(schema.estateParty).values({
-        firmId: firm.id,
-        estateId: row.id,
-        userId: isSarah ? sarahId : null,
-        role: p.role === "executor" ? "executor" : "beneficiary",
-        fullName: p.name,
-        email: isSarah ? SEED_USERS.sarah : (p.email ?? null),
-        relationship: p.relationship ?? null,
-        workspaceKey: p.id,
-        invitedAt: isSarah ? new Date("2026-06-01T10:00:00Z") : null,
-        acceptedAt: isSarah ? new Date("2026-06-01T19:12:00Z") : null,
-      });
-    }
-    await db.insert(schema.auditEvent).values({
-      firmId: firm.id,
-      estateId: row.id,
-      actorType: "system",
-      action: "seed.import",
-      entityType: "estate",
-      entityId: row.id,
-      summary: `Imported ${e.deceased.fullName} (${e.ref}) from the v1 demo data`,
-      after: { ref: e.ref, stage: e.stage },
-    });
+    await writeEstate(db, firm.id, e, { byPartyKey: e.id === "ellis" ? { p_sarah: sarahId } : {}, byMembership: membershipUser });
   }
   console.log(`Seeded Ellis & Rowe: ${seed.estates.length} estates, ${staffDefs.length} staff, 1 family user.`);
 }
@@ -136,33 +153,19 @@ async function seedHartleyMoss(db: Db) {
   const ruthId = await createUser(db, SEED_USERS.ruth, "Ruth Kemp");
 
   const base = freshSeed().estates.find((e) => e.id === "okafor")!;
-  const workspace: Estate = {
+  const now = new Date().toISOString();
+  const kemp: Estate = {
     ...base,
     id: "kemp",
     ref: "HM-0101",
-    deceased: { firstName: "Doris", fullName: "Doris Jean Kemp", shortName: "Doris Kemp", dateOfDeath: "2026-03-02" },
+    deceased: { firstName: "Doris", fullName: "Doris Jean Kemp", shortName: "Doris Kemp", dateOfDeath: base.deceased.dateOfDeath },
     feeEarnerId: m.id,
     clientPartyId: "p_kemp_client",
-    parties: [{ id: "p_kemp_client", name: "Ruth Kemp", initials: "RK", role: "executor", relationship: "daughter", color: "#E3A13A", portalStatus: "active" }],
-    tasks: [{ id: "kemp_t1", title: "Check Registry status", owner: { kind: "firm", staffId: m.id }, due: "Today", done: false }],
-    blocker: "Probate Registry · applied 4 weeks ago",
+    parties: [{ id: "p_kemp_client", name: "Ruth Kemp", initials: "RK", role: "executor", relationship: "daughter", email: SEED_USERS.ruth, color: "#E3A13A", portalStatus: "active" }],
+    tasks: [{ id: "kemp_t1", title: "Check Registry status", owner: { kind: "firm", staffId: m.id }, dueOn: now.slice(0, 10), done: false, createdAt: now }],
+    audit: [],
   };
-  const [row] = await db
-    .insert(schema.estate)
-    .values({ firmId: firm.id, ref: "HM-0101", slug: "kemp", deceasedFullName: "Doris Jean Kemp", dateOfDeath: "2026-03-02", feeEarnerId: m.id, workspace })
-    .returning();
-  await db.insert(schema.estateParty).values({
-    firmId: firm.id,
-    estateId: row.id,
-    userId: ruthId,
-    role: "executor",
-    fullName: "Ruth Kemp",
-    email: SEED_USERS.ruth,
-    workspaceKey: "p_kemp_client",
-    invitedAt: new Date(),
-    acceptedAt: new Date(),
-  });
-  await db.insert(schema.auditEvent).values({ firmId: firm.id, estateId: row.id, actorType: "system", action: "seed.import", entityType: "estate", entityId: row.id, summary: "Seeded demo estate" });
+  await writeEstate(db, firm.id, kemp, { byPartyKey: { p_kemp_client: ruthId }, byMembership: { [m.id]: owenId } });
   console.log("Seeded Hartley Moss: 1 estate, 1 staff, 1 family user.");
 }
 

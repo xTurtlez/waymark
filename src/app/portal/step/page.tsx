@@ -7,6 +7,7 @@ import { AddAssetSheet } from "@/components/shared/AddAssetSheet";
 import { Avatar, btn } from "@/components/ui/primitives";
 import { feeEarner, firstName } from "@/lib/selectors";
 import { useClientEstate, useDemo } from "@/lib/store";
+import { assetStatus } from "@/lib/derive";
 
 export default function TodaysStep() {
   const state = useDemo();
@@ -64,7 +65,7 @@ export default function TodaysStep() {
               {familyBanks.map((a) => (
                 <li key={a.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-[16px] border border-line bg-paper px-4 py-3 text-[15px] font-semibold">
                   {a.clientName ?? a.name}
-                  <span className="text-[13px] font-semibold text-amber-ink">{a.clientStatus}</span>
+                  <span className="text-[13px] font-semibold text-amber-ink">{assetStatus(a, estate, solFirst).client}</span>
                 </li>
               ))}
             </ul>

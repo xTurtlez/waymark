@@ -1,6 +1,6 @@
 {
-  "id": "ce51dada-2f2b-40b6-88be-29ae9f9640e7",
-  "prevId": "743e7287-7389-460e-9f1d-e6af68415d0a",
+  "id": "8520275d-7128-4698-b84d-6cd545d6c0a8",
+  "prevId": "faca94eb-3639-4778-8b72-53a2f5dfde88",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -246,6 +246,51 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.rate_limit": {
+      "name": "rate_limit",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_request": {
+          "name": "last_request",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "rate_limit_key_unique": {
+          "name": "rate_limit_key_unique",
+          "columns": [
+            "key"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -760,6 +805,561 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.client_update": {
+      "name": "client_update",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firm_id": {
+          "name": "firm_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estate_id": {
+          "name": "estate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tone": {
+          "name": "tone",
+          "type": "tone",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'coral'"
+        },
+        "is_milestone": {
+          "name": "is_milestone",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "posted_at": {
+          "name": "posted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "client_update_key": {
+          "name": "client_update_key",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "client_update_estate": {
+          "name": "client_update_estate",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "posted_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "client_update_firm_id_firm_id_fk": {
+          "name": "client_update_firm_id_firm_id_fk",
+          "tableFrom": "client_update",
+          "columnsFrom": [
+            "firm_id"
+          ],
+          "tableTo": "firm",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "client_update_estate_id_estate_id_fk": {
+          "name": "client_update_estate_id_estate_id_fk",
+          "tableFrom": "client_update",
+          "columnsFrom": [
+            "estate_id"
+          ],
+          "tableTo": "estate",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.document": {
+      "name": "document",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firm_id": {
+          "name": "firm_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estate_id": {
+          "name": "estate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hint": {
+          "name": "hint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "icon": {
+          "name": "icon",
+          "type": "document_icon",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'file'"
+        },
+        "state": {
+          "name": "state",
+          "type": "document_state",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "copies": {
+          "name": "copies",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "file_id": {
+          "name": "file_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "uploaded_by_party_id": {
+          "name": "uploaded_by_party_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "uploaded_by_membership_id": {
+          "name": "uploaded_by_membership_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "uploaded_at": {
+          "name": "uploaded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "document_key": {
+          "name": "document_key",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "document_firm_id_firm_id_fk": {
+          "name": "document_firm_id_firm_id_fk",
+          "tableFrom": "document",
+          "columnsFrom": [
+            "firm_id"
+          ],
+          "tableTo": "firm",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "document_estate_id_estate_id_fk": {
+          "name": "document_estate_id_estate_id_fk",
+          "tableFrom": "document",
+          "columnsFrom": [
+            "estate_id"
+          ],
+          "tableTo": "estate",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "document_file_id_file_object_id_fk": {
+          "name": "document_file_id_file_object_id_fk",
+          "tableFrom": "document",
+          "columnsFrom": [
+            "file_id"
+          ],
+          "tableTo": "file_object",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "document_uploaded_by_party_id_estate_party_id_fk": {
+          "name": "document_uploaded_by_party_id_estate_party_id_fk",
+          "tableFrom": "document",
+          "columnsFrom": [
+            "uploaded_by_party_id"
+          ],
+          "tableTo": "estate_party",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "document_uploaded_by_membership_id_membership_id_fk": {
+          "name": "document_uploaded_by_membership_id_membership_id_fk",
+          "tableFrom": "document",
+          "columnsFrom": [
+            "uploaded_by_membership_id"
+          ],
+          "tableTo": "membership",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.draft": {
+      "name": "draft",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firm_id": {
+          "name": "firm_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estate_id": {
+          "name": "estate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'letter'"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "to_label": {
+          "name": "to_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "re": {
+          "name": "re",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body": {
+          "name": "body",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sign_off": {
+          "name": "sign_off",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sources": {
+          "name": "sources",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "draft_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'review'"
+        },
+        "edited": {
+          "name": "edited",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "task_id": {
+          "name": "task_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "client_update": {
+          "name": "client_update",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decided_by": {
+          "name": "decided_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "draft_key": {
+          "name": "draft_key",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "draft_review": {
+          "name": "draft_review",
+          "columns": [
+            {
+              "expression": "firm_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "draft_firm_id_firm_id_fk": {
+          "name": "draft_firm_id_firm_id_fk",
+          "tableFrom": "draft",
+          "columnsFrom": [
+            "firm_id"
+          ],
+          "tableTo": "firm",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "draft_estate_id_estate_id_fk": {
+          "name": "draft_estate_id_estate_id_fk",
+          "tableFrom": "draft",
+          "columnsFrom": [
+            "estate_id"
+          ],
+          "tableTo": "estate",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "draft_task_id_task_id_fk": {
+          "name": "draft_task_id_task_id_fk",
+          "tableFrom": "draft",
+          "columnsFrom": [
+            "task_id"
+          ],
+          "tableTo": "task",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.estate": {
       "name": "estate",
       "schema": "",
@@ -795,9 +1395,47 @@
           "primaryKey": false,
           "notNull": true
         },
+        "deceased_first_name": {
+          "name": "deceased_first_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deceased_short_name": {
+          "name": "deceased_short_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deceased_aliases": {
+          "name": "deceased_aliases",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "date_of_birth": {
+          "name": "date_of_birth",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
         "date_of_death": {
           "name": "date_of_death",
           "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "place_of_death": {
+          "name": "place_of_death",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "marital_status": {
+          "name": "marital_status",
+          "type": "marital_status",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": false
         },
@@ -823,11 +1461,24 @@
           "primaryKey": false,
           "notNull": false
         },
-        "workspace": {
-          "name": "workspace",
+        "funeral_estimate_pence": {
+          "name": "funeral_estimate_pence",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "fee_estimate_pence": {
+          "name": "fee_estimate_pence",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "today_step": {
+          "name": "today_step",
           "type": "jsonb",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "version": {
           "name": "version",
@@ -842,6 +1493,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "closed_at": {
+          "name": "closed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -959,6 +1616,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "user_id": {
           "name": "user_id",
           "type": "text",
@@ -972,14 +1635,40 @@
           "primaryKey": false,
           "notNull": true
         },
+        "is_primary": {
+          "name": "is_primary",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "full_name": {
           "name": "full_name",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
+        "initials": {
+          "name": "initials",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#E3A13A'"
+        },
         "email": {
           "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -990,11 +1679,19 @@
           "primaryKey": false,
           "notNull": false
         },
-        "workspace_key": {
-          "name": "workspace_key",
+        "detail": {
+          "name": "detail",
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "idv_status": {
+          "name": "idv_status",
+          "type": "idv_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'not_started'"
         },
         "invited_at": {
           "name": "invited_at",
@@ -1017,6 +1714,27 @@
         }
       },
       "indexes": {
+        "estate_party_key": {
+          "name": "estate_party_key",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
         "estate_party_estate": {
           "name": "estate_party_estate",
           "columns": [
@@ -1110,6 +1828,304 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.estate_staff": {
+      "name": "estate_staff",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firm_id": {
+          "name": "firm_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estate_id": {
+          "name": "estate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "membership_id": {
+          "name": "membership_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "detail": {
+          "name": "detail",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "estate_staff_key": {
+          "name": "estate_staff_key",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "estate_staff_member": {
+          "name": "estate_staff_member",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "membership_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "estate_staff_firm_id_firm_id_fk": {
+          "name": "estate_staff_firm_id_firm_id_fk",
+          "tableFrom": "estate_staff",
+          "columnsFrom": [
+            "firm_id"
+          ],
+          "tableTo": "firm",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "estate_staff_estate_id_estate_id_fk": {
+          "name": "estate_staff_estate_id_estate_id_fk",
+          "tableFrom": "estate_staff",
+          "columnsFrom": [
+            "estate_id"
+          ],
+          "tableTo": "estate",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "estate_staff_membership_id_membership_id_fk": {
+          "name": "estate_staff_membership_id_membership_id_fk",
+          "tableFrom": "estate_staff",
+          "columnsFrom": [
+            "membership_id"
+          ],
+          "tableTo": "membership",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.extraction": {
+      "name": "extraction",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firm_id": {
+          "name": "firm_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estate_id": {
+          "name": "estate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fields": {
+          "name": "fields",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "holding_id": {
+          "name": "holding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "extraction_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'review'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "extraction_key": {
+          "name": "extraction_key",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "extraction_firm_id_firm_id_fk": {
+          "name": "extraction_firm_id_firm_id_fk",
+          "tableFrom": "extraction",
+          "columnsFrom": [
+            "firm_id"
+          ],
+          "tableTo": "firm",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "extraction_estate_id_estate_id_fk": {
+          "name": "extraction_estate_id_estate_id_fk",
+          "tableFrom": "extraction",
+          "columnsFrom": [
+            "estate_id"
+          ],
+          "tableTo": "estate",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "extraction_document_id_document_id_fk": {
+          "name": "extraction_document_id_document_id_fk",
+          "tableFrom": "extraction",
+          "columnsFrom": [
+            "document_id"
+          ],
+          "tableTo": "document",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "extraction_holding_id_holding_id_fk": {
+          "name": "extraction_holding_id_holding_id_fk",
+          "tableFrom": "extraction",
+          "columnsFrom": [
+            "holding_id"
+          ],
+          "tableTo": "holding",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.file_object": {
       "name": "file_object",
       "schema": "",
@@ -1176,12 +2192,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'pending'"
-        },
-        "document_key": {
-          "name": "document_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -1335,6 +2345,330 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.holding": {
+      "name": "holding",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firm_id": {
+          "name": "firm_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estate_id": {
+          "name": "estate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "institution_id": {
+          "name": "institution_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "institution_label": {
+          "name": "institution_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "kind": {
+          "name": "kind",
+          "type": "holding_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "client_name": {
+          "name": "client_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reference": {
+          "name": "reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "joint_share_bp": {
+          "name": "joint_share_bp",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
+          "type": "holding_state",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value_pence": {
+          "name": "value_pence",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "liability": {
+          "name": "liability",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "added_by": {
+          "name": "added_by",
+          "type": "added_by",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "next_action": {
+          "name": "next_action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "next_action_on": {
+          "name": "next_action_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "evidence_document_id": {
+          "name": "evidence_document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "holding_key": {
+          "name": "holding_key",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "holding_estate": {
+          "name": "holding_estate",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "holding_firm_id_firm_id_fk": {
+          "name": "holding_firm_id_firm_id_fk",
+          "tableFrom": "holding",
+          "columnsFrom": [
+            "firm_id"
+          ],
+          "tableTo": "firm",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "holding_estate_id_estate_id_fk": {
+          "name": "holding_estate_id_estate_id_fk",
+          "tableFrom": "holding",
+          "columnsFrom": [
+            "estate_id"
+          ],
+          "tableTo": "estate",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "holding_institution_id_institution_id_fk": {
+          "name": "holding_institution_id_institution_id_fk",
+          "tableFrom": "holding",
+          "columnsFrom": [
+            "institution_id"
+          ],
+          "tableTo": "institution",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.institution": {
+      "name": "institution",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "institution_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bereavement_email": {
+          "name": "bereavement_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bereavement_address": {
+          "name": "bereavement_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "typical_response_days": {
+          "name": "typical_response_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "small_estate_threshold_pence": {
+          "name": "small_estate_threshold_pence",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "accepts_dns": {
+          "name": "accepts_dns",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "verified": {
+          "name": "verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "institution_name": {
+          "name": "institution_name",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.job": {
       "name": "job",
       "schema": "",
@@ -1483,6 +2817,150 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.ledger_entry": {
+      "name": "ledger_entry",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firm_id": {
+          "name": "firm_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estate_id": {
+          "name": "estate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "holding_id": {
+          "name": "holding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "ledger_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount_pence": {
+          "name": "amount_pence",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "occurred_on": {
+          "name": "occurred_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evidence_document_id": {
+          "name": "evidence_document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "ledger_entry_estate": {
+          "name": "ledger_entry_estate",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_on",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "ledger_entry_firm_id_firm_id_fk": {
+          "name": "ledger_entry_firm_id_firm_id_fk",
+          "tableFrom": "ledger_entry",
+          "columnsFrom": [
+            "firm_id"
+          ],
+          "tableTo": "firm",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "ledger_entry_estate_id_estate_id_fk": {
+          "name": "ledger_entry_estate_id_estate_id_fk",
+          "tableFrom": "ledger_entry",
+          "columnsFrom": [
+            "estate_id"
+          ],
+          "tableTo": "estate",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "ledger_entry_holding_id_holding_id_fk": {
+          "name": "ledger_entry_holding_id_holding_id_fk",
+          "tableFrom": "ledger_entry",
+          "columnsFrom": [
+            "holding_id"
+          ],
+          "tableTo": "holding",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.membership": {
       "name": "membership",
       "schema": "",
@@ -1611,6 +3089,549 @@
           ],
           "onUpdate": "no action",
           "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.message": {
+      "name": "message",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firm_id": {
+          "name": "firm_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estate_id": {
+          "name": "estate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "side": {
+          "name": "side",
+          "type": "message_side",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "author_membership_id": {
+          "name": "author_membership_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "author_party_id": {
+          "name": "author_party_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attachment_name": {
+          "name": "attachment_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "file_id": {
+          "name": "file_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sent_at": {
+          "name": "sent_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "message_key": {
+          "name": "message_key",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "message_estate": {
+          "name": "message_estate",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "sent_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "message_firm_id_firm_id_fk": {
+          "name": "message_firm_id_firm_id_fk",
+          "tableFrom": "message",
+          "columnsFrom": [
+            "firm_id"
+          ],
+          "tableTo": "firm",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "message_estate_id_estate_id_fk": {
+          "name": "message_estate_id_estate_id_fk",
+          "tableFrom": "message",
+          "columnsFrom": [
+            "estate_id"
+          ],
+          "tableTo": "estate",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "message_author_membership_id_membership_id_fk": {
+          "name": "message_author_membership_id_membership_id_fk",
+          "tableFrom": "message",
+          "columnsFrom": [
+            "author_membership_id"
+          ],
+          "tableTo": "membership",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "message_author_party_id_estate_party_id_fk": {
+          "name": "message_author_party_id_estate_party_id_fk",
+          "tableFrom": "message",
+          "columnsFrom": [
+            "author_party_id"
+          ],
+          "tableTo": "estate_party",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "message_file_id_file_object_id_fk": {
+          "name": "message_file_id_file_object_id_fk",
+          "tableFrom": "message",
+          "columnsFrom": [
+            "file_id"
+          ],
+          "tableTo": "file_object",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.milestone": {
+      "name": "milestone",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firm_id": {
+          "name": "firm_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estate_id": {
+          "name": "estate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "milestone_key",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reached_on": {
+          "name": "reached_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "milestone_estate_key": {
+          "name": "milestone_estate_key",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "milestone_firm_id_firm_id_fk": {
+          "name": "milestone_firm_id_firm_id_fk",
+          "tableFrom": "milestone",
+          "columnsFrom": [
+            "firm_id"
+          ],
+          "tableTo": "firm",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "milestone_estate_id_estate_id_fk": {
+          "name": "milestone_estate_id_estate_id_fk",
+          "tableFrom": "milestone",
+          "columnsFrom": [
+            "estate_id"
+          ],
+          "tableTo": "estate",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.missing_item": {
+      "name": "missing_item",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firm_id": {
+          "name": "firm_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estate_id": {
+          "name": "estate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action_label": {
+          "name": "action_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action_kind": {
+          "name": "action_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tone": {
+          "name": "tone",
+          "type": "tone",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'amber'"
+        },
+        "resolved_at": {
+          "name": "resolved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "missing_item_key": {
+          "name": "missing_item_key",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "missing_item_firm_id_firm_id_fk": {
+          "name": "missing_item_firm_id_firm_id_fk",
+          "tableFrom": "missing_item",
+          "columnsFrom": [
+            "firm_id"
+          ],
+          "tableTo": "firm",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "missing_item_estate_id_estate_id_fk": {
+          "name": "missing_item_estate_id_estate_id_fk",
+          "tableFrom": "missing_item",
+          "columnsFrom": [
+            "estate_id"
+          ],
+          "tableTo": "estate",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.note": {
+      "name": "note",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firm_id": {
+          "name": "firm_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estate_id": {
+          "name": "estate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "author_membership_id": {
+          "name": "author_membership_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "note_key": {
+          "name": "note_key",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "note_firm_id_firm_id_fk": {
+          "name": "note_firm_id_firm_id_fk",
+          "tableFrom": "note",
+          "columnsFrom": [
+            "firm_id"
+          ],
+          "tableTo": "firm",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "note_estate_id_estate_id_fk": {
+          "name": "note_estate_id_estate_id_fk",
+          "tableFrom": "note",
+          "columnsFrom": [
+            "estate_id"
+          ],
+          "tableTo": "estate",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "note_author_membership_id_membership_id_fk": {
+          "name": "note_author_membership_id_membership_id_fk",
+          "tableFrom": "note",
+          "columnsFrom": [
+            "author_membership_id"
+          ],
+          "tableTo": "membership",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
         }
       },
       "compositePrimaryKeys": {},
@@ -1751,6 +3772,499 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+    },
+    "public.task": {
+      "name": "task",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firm_id": {
+          "name": "firm_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estate_id": {
+          "name": "estate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "owner_kind": {
+          "name": "owner_kind",
+          "type": "task_owner_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "owner_membership_id": {
+          "name": "owner_membership_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "owner_party_id": {
+          "name": "owner_party_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "owner_label": {
+          "name": "owner_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "third_party_category": {
+          "name": "third_party_category",
+          "type": "third_party_category",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "institution_id": {
+          "name": "institution_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "due_on": {
+          "name": "due_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "done_at": {
+          "name": "done_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "done_by": {
+          "name": "done_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_rule": {
+          "name": "source_rule",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "task_key": {
+          "name": "task_key",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "task_estate_open": {
+          "name": "task_estate_open",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "done_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "task_firm_id_firm_id_fk": {
+          "name": "task_firm_id_firm_id_fk",
+          "tableFrom": "task",
+          "columnsFrom": [
+            "firm_id"
+          ],
+          "tableTo": "firm",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "task_estate_id_estate_id_fk": {
+          "name": "task_estate_id_estate_id_fk",
+          "tableFrom": "task",
+          "columnsFrom": [
+            "estate_id"
+          ],
+          "tableTo": "estate",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "task_owner_membership_id_membership_id_fk": {
+          "name": "task_owner_membership_id_membership_id_fk",
+          "tableFrom": "task",
+          "columnsFrom": [
+            "owner_membership_id"
+          ],
+          "tableTo": "membership",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "task_owner_party_id_estate_party_id_fk": {
+          "name": "task_owner_party_id_estate_party_id_fk",
+          "tableFrom": "task",
+          "columnsFrom": [
+            "owner_party_id"
+          ],
+          "tableTo": "estate_party",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "task_institution_id_institution_id_fk": {
+          "name": "task_institution_id_institution_id_fk",
+          "tableFrom": "task",
+          "columnsFrom": [
+            "institution_id"
+          ],
+          "tableTo": "institution",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.will": {
+      "name": "will",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firm_id": {
+          "name": "firm_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estate_id": {
+          "name": "estate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dated_on": {
+          "name": "dated_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "original_held": {
+          "name": "original_held",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "codicils": {
+          "name": "codicils",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "will_estate": {
+          "name": "will_estate",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "will_firm_id_firm_id_fk": {
+          "name": "will_firm_id_firm_id_fk",
+          "tableFrom": "will",
+          "columnsFrom": [
+            "firm_id"
+          ],
+          "tableTo": "firm",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "will_estate_id_estate_id_fk": {
+          "name": "will_estate_id_estate_id_fk",
+          "tableFrom": "will",
+          "columnsFrom": [
+            "estate_id"
+          ],
+          "tableTo": "estate",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.will_gift": {
+      "name": "will_gift",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firm_id": {
+          "name": "firm_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estate_id": {
+          "name": "estate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "will_id": {
+          "name": "will_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "gift_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "beneficiary_party_id": {
+          "name": "beneficiary_party_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount_pence": {
+          "name": "amount_pence",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "share_bp": {
+          "name": "share_bp",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "substitution": {
+          "name": "substitution",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "will_gift_key": {
+          "name": "will_gift_key",
+          "columns": [
+            {
+              "expression": "estate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "will_gift_firm_id_firm_id_fk": {
+          "name": "will_gift_firm_id_firm_id_fk",
+          "tableFrom": "will_gift",
+          "columnsFrom": [
+            "firm_id"
+          ],
+          "tableTo": "firm",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "will_gift_estate_id_estate_id_fk": {
+          "name": "will_gift_estate_id_estate_id_fk",
+          "tableFrom": "will_gift",
+          "columnsFrom": [
+            "estate_id"
+          ],
+          "tableTo": "estate",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "will_gift_will_id_will_id_fk": {
+          "name": "will_gift_will_id_will_id_fk",
+          "tableFrom": "will_gift",
+          "columnsFrom": [
+            "will_id"
+          ],
+          "tableTo": "will",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "will_gift_beneficiary_party_id_estate_party_id_fk": {
+          "name": "will_gift_beneficiary_party_id_estate_party_id_fk",
+          "tableFrom": "will_gift",
+          "columnsFrom": [
+            "beneficiary_party_id"
+          ],
+          "tableTo": "estate_party",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {
@@ -1765,6 +4279,14 @@
         "support"
       ]
     },
+    "public.added_by": {
+      "name": "added_by",
+      "schema": "public",
+      "values": [
+        "firm",
+        "family"
+      ]
+    },
     "public.channel": {
       "name": "channel",
       "schema": "public",
@@ -1772,6 +4294,38 @@
         "email",
         "sms",
         "post"
+      ]
+    },
+    "public.document_icon": {
+      "name": "document_icon",
+      "schema": "public",
+      "values": [
+        "scroll",
+        "envelope",
+        "receipt",
+        "certificate",
+        "file",
+        "bank",
+        "house"
+      ]
+    },
+    "public.document_state": {
+      "name": "document_state",
+      "schema": "public",
+      "values": [
+        "needed",
+        "checking",
+        "accepted",
+        "held"
+      ]
+    },
+    "public.draft_status": {
+      "name": "draft_status",
+      "schema": "public",
+      "values": [
+        "review",
+        "sent",
+        "discarded"
       ]
     },
     "public.estate_status": {
@@ -1783,6 +4337,14 @@
         "archived"
       ]
     },
+    "public.extraction_status": {
+      "name": "extraction_status",
+      "schema": "public",
+      "values": [
+        "review",
+        "accepted"
+      ]
+    },
     "public.firm_role": {
       "name": "firm_role",
       "schema": "public",
@@ -1791,6 +4353,70 @@
         "partner",
         "fee_earner",
         "paralegal"
+      ]
+    },
+    "public.gift_kind": {
+      "name": "gift_kind",
+      "schema": "public",
+      "values": [
+        "specific",
+        "pecuniary",
+        "residuary",
+        "life_interest"
+      ]
+    },
+    "public.holding_kind": {
+      "name": "holding_kind",
+      "schema": "public",
+      "values": [
+        "property",
+        "bank",
+        "savings",
+        "bonds",
+        "pension",
+        "investment",
+        "credit",
+        "utility",
+        "other"
+      ]
+    },
+    "public.holding_state": {
+      "name": "holding_state",
+      "schema": "public",
+      "values": [
+        "not_notified",
+        "awaiting",
+        "estimate",
+        "confirmed"
+      ]
+    },
+    "public.idv_status": {
+      "name": "idv_status",
+      "schema": "public",
+      "values": [
+        "not_started",
+        "pending",
+        "passed",
+        "failed",
+        "referred"
+      ]
+    },
+    "public.institution_kind": {
+      "name": "institution_kind",
+      "schema": "public",
+      "values": [
+        "bank",
+        "building_society",
+        "pension",
+        "insurer",
+        "registrar",
+        "utility",
+        "hmrc",
+        "registry",
+        "land_registry",
+        "dwp",
+        "creditor",
+        "other"
       ]
     },
     "public.job_status": {
@@ -1804,6 +4430,37 @@
         "dead"
       ]
     },
+    "public.ledger_kind": {
+      "name": "ledger_kind",
+      "schema": "public",
+      "values": [
+        "receipt",
+        "payment",
+        "transfer",
+        "interim_distribution",
+        "final_distribution"
+      ]
+    },
+    "public.marital_status": {
+      "name": "marital_status",
+      "schema": "public",
+      "values": [
+        "single",
+        "married",
+        "civil_partner",
+        "widowed",
+        "divorced",
+        "unknown"
+      ]
+    },
+    "public.message_side": {
+      "name": "message_side",
+      "schema": "public",
+      "values": [
+        "client",
+        "firm"
+      ]
+    },
     "public.message_status": {
       "name": "message_status",
       "schema": "public",
@@ -1811,6 +4468,19 @@
         "queued",
         "sent",
         "failed"
+      ]
+    },
+    "public.milestone_key": {
+      "name": "milestone_key",
+      "schema": "public",
+      "values": [
+        "registered",
+        "gathered",
+        "valued",
+        "iht",
+        "grant",
+        "collected",
+        "distributed"
       ]
     },
     "public.party_role": {
@@ -1841,6 +4511,36 @@
       "values": [
         "full_admin",
         "grant_only"
+      ]
+    },
+    "public.task_owner_kind": {
+      "name": "task_owner_kind",
+      "schema": "public",
+      "values": [
+        "firm",
+        "family",
+        "third"
+      ]
+    },
+    "public.third_party_category": {
+      "name": "third_party_category",
+      "schema": "public",
+      "values": [
+        "bank",
+        "hmrc",
+        "registry",
+        "other"
+      ]
+    },
+    "public.tone": {
+      "name": "tone",
+      "schema": "public",
+      "values": [
+        "teal",
+        "coral",
+        "amber",
+        "plum",
+        "neutral"
       ]
     }
   },

@@ -1,4 +1,4 @@
-import type { StageIndex, Tone, WaitingOn } from "./types";
+import type { Tone, WaitingOn } from "./types";
 
 /** The seven stages of an estate administration in England & Wales. */
 export const STAGES = [
@@ -12,17 +12,6 @@ export const STAGES = [
 ] as const;
 
 export const STAGE_COUNT = STAGES.length;
-
-/** Client-facing timing copy per stage (journey screen). */
-export const STAGE_TIMING: Record<StageIndex, { done: string; later: string }> = {
-  0: { done: "Done 2 June", later: "" },
-  1: { done: "Done 18 July", later: "" },
-  2: { done: "Done 9 October", later: "Usually 6 to 8 weeks" },
-  3: { done: "Done November", later: "Expected Oct to Nov" },
-  4: { done: "Done January", later: "Expected Dec to Feb" },
-  5: { done: "Done March", later: "Expected Feb to Apr" },
-  6: { done: "Complete", later: "Expected spring 2027" },
-};
 
 export type SegState = "done" | "now" | "later";
 export function segState(i: number, stage: number): SegState {

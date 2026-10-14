@@ -2,8 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import { PiCheckBold } from "react-icons/pi";
-import { STAGES, STAGE_TIMING } from "@/lib/stages";
-import type { StageIndex } from "@/lib/types";
+import { stageTiming } from "@/lib/derive";
+import { STAGES } from "@/lib/stages";
+import type { Estate } from "@/lib/types";
 
 const W = 342;
 const STEP = 135;
@@ -13,7 +14,8 @@ const H = 50 + STEP * 6 + 50;
  * The winding seven-stage path from the client journey design.
  * The completed part draws itself in on load (skipped for reduced motion).
  */
-export function JourneyPath({ stage, needsYou }: { stage: StageIndex; needsYou: number }) {
+export function JourneyPath({ estate, needsYou }: { estate: Estate; needsYou: number }) {
+  const stage = estate.stage;
   const progRef = useRef<SVGPathElement>(null);
   const pts = STAGES.map((_, i) => [i % 2 ? 286 : 56, 50 + i * STEP] as const);
   let fullD = `M${pts[0][0]},${pts[0][1]}`;
@@ -61,10 +63,10 @@ export function JourneyPath({ stage, needsYou }: { stage: StageIndex; needsYou: 
         const [nx, ny] = pts[i];
         const eyebrow = done ? "Done" : now ? "You are here" : i === stage + 1 ? "Up next" : `Stage ${i + 1}`;
         const meta = done
-          ? STAGE_TIMING[i as StageIndex].done
+          ? stageTiming(estate, i)
           : now
-            ? `${STAGE_TIMING[i as StageIndex].later || "In progress"}${needsYou ? ` · ${needsYou} thing${needsYou > 1 ? "s" : ""} for you` : ""}`
-            : STAGE_TIMING[i as StageIndex].later || "Later";
+            ? `${stageTiming(estate, i)}${needsYou ? ` · ${needsYou} thing${needsYou > 1 ? "s" : ""} for you` : ""}`
+            : stageTiming(estate, i);
         return (
           <li key={s.long} aria-current={now ? "step" : undefined}>
             <div

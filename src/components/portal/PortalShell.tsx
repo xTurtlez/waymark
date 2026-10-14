@@ -19,6 +19,7 @@ import {
 import { Cairn } from "@/components/brand/Cairn";
 import { clientParty } from "@/lib/selectors";
 import { useClientEstate, useDemo, useStore } from "@/lib/store";
+import { isoDay } from "@/lib/format";
 
 const NAV: { href: string; label: string; icon: IconType; active: IconType }[] = [
   { href: "/portal", label: "Journey", icon: PiPath, active: PiPathFill },
@@ -40,7 +41,8 @@ export function PortalShell({ children }: { children: ReactNode }) {
 export function BottomNav() {
   const pathname = usePathname().replace(/(.)\/$/, "$1");
   const estate = useClientEstate();
-  const unreadUpdates = estate.updates.filter((u) => u.when === "Today").length;
+  const today = isoDay();
+  const unreadUpdates = estate.updates.filter((u) => isoDay(u.at) === today).length;
   return (
     <nav aria-label="Portal" className="sticky bottom-0 z-20 mt-auto grid grid-cols-5 border-t border-line bg-paper px-3 pb-[max(20px,env(safe-area-inset-bottom))] pt-2.5">
       {NAV.map((n) => {

@@ -22,7 +22,7 @@ export class UploadError extends Error {
 export async function storeUpload(
   viewer: StaffViewer | FamilyViewer,
   file: File,
-  meta: { estateSlug: string; documentKey?: string; ip?: string | null; userAgent?: string | null },
+  meta: { estateSlug: string; ip?: string | null; userAgent?: string | null },
 ) {
   const maxBytes = env().MAX_UPLOAD_MB * 1024 * 1024;
   if (file.size === 0) throw new UploadError("That file is empty.");
@@ -56,7 +56,6 @@ export async function storeUpload(
         sizeBytes: bytes.byteLength,
         sha256,
         scanStatus: scan === "clean" ? "clean" : "unscanned",
-        documentKey: meta.documentKey ?? null,
       })
       .returning({ id: schema.fileObject.id });
     await writeAudit(tx, {

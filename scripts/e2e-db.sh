@@ -8,4 +8,4 @@ export DATABASE_URL="$DATABASE_ADMIN_URL"
 npx tsx scripts/reset.ts
 npx tsx scripts/migrate.ts
 npx tsx scripts/runtime-role.ts
-npx tsx scripts/seed.ts
+npx tsx --conditions=react-server scripts/seed.ts

@@ -5,8 +5,9 @@ import { useHydrated } from "./useNow";
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, useTransition } from "react";
 import type { AssetKind, DemoState, Estate, TaskOwner } from "./types";
 import { SEED_VERSION, freshSeed } from "./seed";
-import { uid } from "./format";
 import { reducer, type Action } from "./reducer";
+import { addDays, isoDay, uid } from "./format";
+import { deriveState } from "./derive";
 
 export type { Action } from "./reducer";
 
@@ -42,7 +43,7 @@ interface StoreValue {
   error: string | null;
   clearError: () => void;
   /** Store the file (live) or just record its name (demo). */
-  uploadFile: (file: File, meta: { estateId: string; documentKey?: string }) => Promise<UploadedFile>;
+  uploadFile: (file: File, meta: { estateId: string }) => Promise<UploadedFile>;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -50,7 +51,7 @@ const StoreContext = createContext<StoreValue | null>(null);
 type Internal = { type: "__replace"; state: DemoState } | Action;
 
 function internalReducer(state: DemoState, a: Internal): DemoState {
-  if (a.type === "__replace") return a.state;
+  if (a.type === "__replace") return deriveState(a.state);
   return reducer(state, a);
 }
 
@@ -154,12 +155,11 @@ export function StoreProvider({
   );
 
   const uploadFile = useCallback(
-    async (file: File, meta: { estateId: string; documentKey?: string }): Promise<UploadedFile> => {
+    async (file: File, meta: { estateId: string }): Promise<UploadedFile> => {
       if (mode === "demo") return { fileName: file.name };
       const body = new FormData();
       body.set("file", file);
       body.set("estate", meta.estateId);
-      if (meta.documentKey) body.set("documentKey", meta.documentKey);
       const res = await fetch("/api/files", { method: "POST", body });
       const json = (await res.json().catch(() => ({}))) as { id?: string; fileName?: string; error?: string };
       if (!res.ok || !json.id) throw new Error(json.error ?? "Upload failed. Please try again.");
@@ -223,14 +223,14 @@ export function useActions() {
         act({ type: "reset" });
       },
       toggleTask: (estateId: string, taskId: string) => act({ type: "toggleTask", estateId, taskId }),
-      addTask: (estateId: string, title: string, owner: TaskOwner, due = "This week") => act({ type: "addTask", estateId, title, owner, due }),
+      addTask: (estateId: string, title: string, owner: TaskOwner, dueOn: string | null = addDays(isoDay(), 7)) => act({ type: "addTask", estateId, title, owner, dueOn }),
       editDraft: (estateId: string, draftId: string, body: string[]) => act({ type: "editDraft", estateId, draftId, body }),
       approveDraft: (estateId: string, draftId: string) => act({ type: "approveDraft", estateId, draftId }),
       discardDraft: (estateId: string, draftId: string) => act({ type: "discardDraft", estateId, draftId }),
       resolveMissing: (estateId: string, missingId: string) => act({ type: "resolveMissing", estateId, missingId }),
       acceptExtraction: (estateId: string, extractionId: string) => act({ type: "acceptExtraction", estateId, extractionId }),
       markDocChecked: (estateId: string, docId: string) => act({ type: "markDocChecked", estateId, docId }),
-      uploadDocument: (estateId: string, name: string, fileName: string, docId?: string) => act({ type: "uploadDocument", estateId, name, fileName, docId }),
+      uploadDocument: (estateId: string, name: string, fileName: string, docId?: string, fileId?: string) => act({ type: "uploadDocument", estateId, name, fileName, docId, fileId }),
       addAsset: (estateId: string, by: "firm" | "family", asset: { kind: AssetKind; name: string; institution: string; valuePence: number | null; liability: boolean }) =>
         act({ type: "addAsset", estateId, by, ...asset }),
       sendMessage: (estateId: string, from: "client" | "firm", text: string, attachment?: string) => act({ type: "sendMessage", estateId, from, text, attachment }),

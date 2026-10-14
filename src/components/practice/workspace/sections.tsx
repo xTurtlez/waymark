@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { PiCheckBold, PiPaperclip, PiPaperPlaneRightFill, PiPlusBold } from "react-icons/pi";
-import { ASSET_ICON, ASSET_STATE_TONE, DOC_FIRM, DOC_ICON } from "@/components/shared/assetMeta";
+import { ASSET_ICON, DOC_FIRM, DOC_ICON } from "@/components/shared/assetMeta";
 import { Avatar, EmptyNote, SectionCard, btn, input } from "@/components/ui/primitives";
 import { TONE_CHIP } from "@/lib/stages";
 import { actor, ihtPosition, partyById, staffById, firstName } from "@/lib/selectors";
 import { useActions } from "@/lib/store";
 import { money, signedMoney } from "@/lib/format";
-import type { DemoState, Estate, Task, TaskOwner } from "@/lib/types";
+import type { DemoState, Estate, PartyRole, Task, TaskOwner } from "@/lib/types";
+import { assetStatus } from "@/lib/derive";
+import { dayHeading, dayLabel, dueInfo, isoDay, shortDay, stampLabel, timeLabel, uploadedLabel } from "@/lib/format";
 
 /* ───────────── Tasks ───────────── */
 
@@ -25,7 +27,14 @@ export function TasksCard({ state, estate, limit }: { state: DemoState; estate: 
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState("");
   const [owner, setOwner] = useState("me");
-  const sorted = [...estate.tasks].sort((a, b) => Number(a.done) - Number(b.done));
+  // Open first, by due date (overdue at the top, undated last); done tasks after, newest first.
+  const sorted = [...estate.tasks].sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    if (a.done) return (b.doneAt ?? "") < (a.doneAt ?? "") ? -1 : 1;
+    const ad = a.dueOn ?? "9999-12-31";
+    const bd = b.dueOn ?? "9999-12-31";
+    return ad < bd ? -1 : ad > bd ? 1 : 0;
+  });
   const list = limit ? sorted.slice(0, limit) : sorted;
 
   function submit(e: React.FormEvent) {
@@ -71,6 +80,7 @@ export function TasksCard({ state, estate, limit }: { state: DemoState; estate: 
       <ul className="m-0 mt-3 flex list-none flex-col p-0">
         {list.map((t) => {
           const chip = ownerChip(state, estate, t);
+          const due = dueInfo(t.dueOn, t.done);
           return (
             <li key={t.id} className="grid grid-cols-[22px_1fr_auto_auto] items-center gap-3 border-t border-line-soft py-[11px]">
               <button
@@ -85,7 +95,7 @@ export function TasksCard({ state, estate, limit }: { state: DemoState; estate: 
               </button>
               <span className={`text-[14.5px] font-medium ${t.done ? "text-muted line-through decoration-line-strong" : "text-ink"}`}>{t.title}</span>
               <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${chip.cls}`}>{chip.label}</span>
-              <span className={`w-14 text-right text-[13px] font-medium ${t.overdue && !t.done ? "text-coral-ink" : "text-muted"}`}>{t.done ? t.doneOn ?? "" : t.due}</span>
+              <span className={`w-16 text-right text-[13px] font-medium ${due.overdue ? "text-coral-ink" : "text-muted"}`}>{t.done ? (t.doneAt ? dayLabel(t.doneAt) : "") : due.label}</span>
             </li>
           );
         })}
@@ -134,6 +144,7 @@ export function LedgerCard({
           </div>
           {rows.map((a) => {
             const Icon = ASSET_ICON[a.kind];
+            const st = assetStatus(a, estate, "");
             return (
               <div role="row" key={a.id} className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_84px] items-center gap-2.5 border-t border-line-soft py-2.5">
                 <span role="cell" className="flex min-w-0 items-center gap-2.5 font-medium">
@@ -144,7 +155,7 @@ export function LedgerCard({
                   {a.institution}
                 </span>
                 <span role="cell" className="min-w-0">
-                  <span className={`inline-block max-w-full truncate rounded-full px-[9px] py-[3px] align-middle text-xs font-semibold ${TONE_CHIP[ASSET_STATE_TONE[a.state]]}`}>{a.firmStatus}</span>
+                  <span className={`inline-block max-w-full truncate rounded-full px-[9px] py-[3px] align-middle text-xs font-semibold ${TONE_CHIP[st.tone]}`}>{st.firm}</span>
                 </span>
                 <span role="cell" className={`text-right font-semibold tabular-nums ${a.liability ? "text-coral-ink" : "text-ink"}`}>
                   {signedMoney(a.valuePence, a.liability)}
@@ -170,7 +181,7 @@ export function AuditCard({ state, estate, limit }: { state: DemoState; estate: 
           const who = actor(state, estate, a.actor);
           return (
             <li key={a.id} className="grid grid-cols-[96px_28px_1fr] items-start gap-2.5 sm:grid-cols-[110px_28px_1fr]">
-              <span className="pt-[3px] font-mono text-[12.5px] text-muted">{a.at}</span>
+              <span className="pt-[3px] font-mono text-[12.5px] text-muted">{stampLabel(a.at)}</span>
               <span title={who.name}>
                 <Avatar initials={who.initials} color={who.color} size={24} />
               </span>
@@ -236,7 +247,7 @@ export function IhtCard({ estate, expanded }: { estate: Estate; expanded?: boole
 
 /* ───────────── Parties ───────────── */
 
-const ROLE_LABEL = { executor: "Executor", beneficiary: "Beneficiary", solicitor: "Solicitor", paralegal: "Paralegal" } as const;
+const ROLE_LABEL: Record<PartyRole, string> = { executor: "Executor", co_executor: "Co-executor", beneficiary: "Beneficiary", attorney: "Attorney", other: "Other", solicitor: "Solicitor", paralegal: "Paralegal" };
 
 export function PartiesCard({ estate }: { estate: Estate }) {
   return (
@@ -288,7 +299,7 @@ export function DocumentsCard({ estate, full }: { estate: Estate; full?: boolean
                     {d.copies ? ` ×${d.copies}` : ""}
                   </div>
                   <div className={`mt-0.5 text-xs font-semibold ${st.text}`}>{st.label}</div>
-                  {full && d.uploadedAt && <div className="mt-1 text-xs text-muted">Added {d.uploadedAt}{d.fileName ? ` · ${d.fileName}` : ""}</div>}
+                  {full && d.uploadedAt && <div className="mt-1 text-xs text-muted">Added {uploadedLabel(d.uploadedAt)}{d.fileName ? ` · ${d.fileName}` : ""}</div>}
                 </div>
               </div>
               {full && d.state === "checking" && (
@@ -315,7 +326,7 @@ export function NotesCard({ state, estate, full }: { state: DemoState; estate: E
     <SectionCard title="Notes" tone="amber">
       {list.map((n) => (
         <p key={n.id} className="m-0 mt-2.5 text-sm leading-normal text-ink-2">
-          {n.text} — {staffById(state, n.author)?.initials}, {n.at}
+          {n.text} — {staffById(state, n.author)?.initials}, {shortDay(n.at)}
         </p>
       ))}
       {list.length === 0 && <p className="m-0 mt-2.5 text-sm text-muted">No notes yet.</p>}
@@ -352,12 +363,12 @@ export function MessagesCard({ state, estate }: { state: DemoState; estate: Esta
     <SectionCard title={`Messages with ${client?.name ?? "the family"}`} action={<span className="text-[13px] text-muted">Shown in their portal</span>}>
       <div className="mt-4 flex flex-col gap-3">
         {estate.messages.map((m, i) => {
-          const showDay = i === 0 || estate.messages[i - 1].day !== m.day;
+          const showDay = i === 0 || isoDay(estate.messages[i - 1].sentAt) !== isoDay(m.sentAt);
           const mine = m.from === "firm";
           const who = actor(state, estate, m.authorId);
           return (
             <div key={m.id} className="flex flex-col gap-2">
-              {showDay && <div className="text-center text-xs font-semibold text-muted">{m.day}</div>}
+              {showDay && <div className="text-center text-xs font-semibold text-muted">{dayHeading(m.sentAt)}</div>}
               <div className={`max-w-[80%] rounded-[18px] px-4 py-3 text-[15px] leading-[1.45] ${mine ? "self-end rounded-br-[6px] bg-teal text-paper" : "self-start rounded-bl-[6px] border border-line bg-cream"}`}>
                 {m.text}
                 {m.attachment && (
@@ -366,7 +377,7 @@ export function MessagesCard({ state, estate }: { state: DemoState; estate: Esta
                   </div>
                 )}
                 <div className={`mt-1.5 text-xs ${mine ? "text-[#B9D6D0]" : "text-muted"}`}>
-                  {firstName(who.name)} · {m.at}
+                  {firstName(who.name)} · {timeLabel(m.sentAt)}
                 </div>
               </div>
             </div>
