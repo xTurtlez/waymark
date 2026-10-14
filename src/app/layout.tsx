@@ -1,22 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Figtree, Newsreader } from "next/font/google";
-import { StoreProvider } from "@/lib/store";
+// Self-hosted fonts (no request to Google at build or run time).
+import "@fontsource-variable/newsreader/opsz.css";
+import "@fontsource-variable/figtree/index.css";
 import "./globals.css";
-
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  axes: ["opsz"],
-  style: ["normal"],
-  variable: "--font-newsreader",
-  display: "swap",
-});
-
-const figtree = Figtree({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-figtree",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: { default: "Waymark", template: "%s · Waymark" },
@@ -29,10 +15,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB" className={`${newsreader.variable} ${figtree.variable}`}>
-      <body>
-        <StoreProvider>{children}</StoreProvider>
-      </body>
+    <html lang="en-GB">
+      <body>{children}</body>
     </html>
   );
 }

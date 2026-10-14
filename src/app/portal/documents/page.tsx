@@ -7,7 +7,7 @@ import { DOC_ICON } from "@/components/shared/assetMeta";
 import { Field, Sheet } from "@/components/ui/Sheet";
 import { btn, input } from "@/components/ui/primitives";
 import { feeEarner, firstName } from "@/lib/selectors";
-import { useActions, useClientEstate, useDemo } from "@/lib/store";
+import { useActions, useClientEstate, useDemo, useStore } from "@/lib/store";
 import type { DocState } from "@/lib/types";
 
 const CLIENT_STATUS: Record<Exclude<DocState, "needed">, { label: string; cls: string }> = {
@@ -29,6 +29,9 @@ export default function Documents() {
   const [otherName, setOtherName] = useState("");
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [thanks, setThanks] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const { uploadFile } = useStore();
 
   const needed = estate.documents.filter((d) => d.state === "needed");
   const gathered = estate.documents.filter((d) => d.state !== "needed");
@@ -46,22 +49,33 @@ export default function Documents() {
     if (!file) return;
     const url = file.type.startsWith("image/") ? URL.createObjectURL(file) : "";
     if (targetDoc) {
-      finish(targetDoc, file, url);
+      void finish(targetDoc, file, url);
     } else {
       setPending({ file, url });
       setChoice(needed[0]?.id ?? "other");
     }
   }
 
-  function finish(docId: string | null, file: File, url: string, name?: string) {
+  async function finish(docId: string | null, file: File, url: string, name?: string) {
     const doc = docId ? estate.documents.find((d) => d.id === docId) : undefined;
     const docName = doc?.name ?? name ?? "Document";
-    uploadDocument(estate.id, docName, file.name, doc?.id);
-    if (url && doc) setThumbs((t) => ({ ...t, [doc.id]: url }));
-    setPending(null);
-    setTargetDoc(null);
-    setOtherName("");
-    setThanks(docName);
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const stored = await uploadFile(file, { estateId: estate.id, documentKey: doc?.id });
+      uploadDocument(estate.id, docName, stored.fileName, doc?.id);
+      if (url && doc) setThumbs((t) => ({ ...t, [doc.id]: url }));
+      setPending(null);
+      setTargetDoc(null);
+      setOtherName("");
+      setThanks(docName);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed. Please try again.");
+      setPending(null);
+      setTargetDoc(null);
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -77,7 +91,17 @@ export default function Documents() {
         </span>
       </div>
 
-      {thanks && (
+      {uploading && (
+        <p role="status" className="m-0 mt-4 rounded-[18px] bg-paper p-4 text-[15px] text-ink-3">
+          Uploading securely…
+        </p>
+      )}
+      {uploadError && (
+        <p role="alert" className="m-0 mt-4 rounded-[18px] bg-coral-tint p-4 text-[15px] text-coral-ink">
+          {uploadError}
+        </p>
+      )}
+      {thanks && !uploading && (
         <div role="status" className="mt-4 flex animate-rise items-center gap-3 rounded-[18px] bg-teal-tint p-4 text-teal-text">
           <span className="grid size-9 flex-none place-items-center rounded-full bg-teal text-white">
             <PiCheckBold aria-hidden />
@@ -160,7 +184,7 @@ export default function Documents() {
             onSubmit={(e) => {
               e.preventDefault();
               if (choice === "other" && !otherName.trim()) return;
-              finish(choice === "other" ? null : choice, pending.file, pending.url, otherName.trim());
+              void finish(choice === "other" ? null : choice, pending.file, pending.url, otherName.trim());
             }}
             className="flex flex-col gap-4"
           >

@@ -2,91 +2,81 @@
 
 Probate software for law firms in England & Wales. Firms license it; executors and families use a firm-branded portal for free.
 
-This repository is the **first working build of the product**: the solicitor's practice workspace and the client portal, built from the design handoff in `design-handoff/`. Both sides share one data store, so an action on one side shows up on the other.
+> Waymark is a software product, not a law firm. It does not give legal advice or hold client money. Solicitors stay responsible for everything that leaves the system.
 
-> Waymark is a software product, not a law firm, and does not give legal advice.
+**Status: v2 in progress** (branch `v2`, plan in `docs/v2-plan.md`). Milestone 1 (Foundation) is built: real database, accounts, row-level security, audit log, file storage and job queue under the v1 screens. Later milestones (Transaction Engine, rules engine, executor flow, Exceptions inbox, AI, outputs) follow the brief's order.
 
-## Live demo
+## Two builds from one codebase
 
-Every push to `main` builds the app and publishes it to GitHub Pages (see `.github/workflows/deploy.yml`). The site is a static export: everything runs in the browser, so no server is needed.
+| | Live | Demo |
+|---|---|---|
+| What | The product, for pilot firms | The public prototype |
+| Hosting | Vercel, London (`lhr1`) | GitHub Pages: https://xturtlez.github.io/waymark/ |
+| Data | Postgres (London), real accounts | Seeded, in the visitor's browser only |
+| Build | `npm run build` | `NEXT_PUBLIC_BASE_PATH=/waymark npm run build:demo` |
 
-One-time setup on a new repo: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+Files named `*.live.tsx` / `*.demo.tsx` are mode-specific (picked by `pageExtensions` in `next.config.ts`); everything else is shared, so both builds show the same screens.
+
+## What's real (live build)
+
+- **Accounts.** Staff sign in with email + password (with TOTP) or a passkey; Microsoft Entra SSO when configured. Executors and families sign in with a magic link. No public sign-up: firms invite people. Sign-in attempts are rate limited in Postgres.
+- **Tenancy in the database.** Every tenant row carries `firm_id`, and Postgres row-level security decides what each request can see. The app connects as `waymark_runtime`, a login that owns nothing and cannot bypass RLS. It reaches firm data only by switching to `waymark_app` inside `withTenant()`. Family users additionally see only estates they are a party to. Tests prove cross-firm reads and writes fail.
+- **Audit log.** `audit_event` is append-only (enforced by trigger and grants) and hash-chained per firm. `audit_verify()` recomputes the chain nightly. Every action records actor, time, IP, user agent and before/after values.
+- **Files.** Uploads are checked by content (not file extension), size-capped, hashed (SHA-256) and malware-scanned before storage. Storage is S3 in `eu-west-2` with server-side encryption (local disk in development), served through access-checked routes.
+- **Jobs.** A Postgres-backed queue: each job runs once even with several workers, retries back off, and duplicates are dropped. A Vercel cron drives it.
+- **Screens.** Every v1 screen (practice dashboard, estate workspace with assistant panel, client portal) runs on the database through one audited server action.
+
+Still to come in later milestones: the full domain model (M2), the tax rules engine (M3), the Transaction Engine (M4), the executor flow (M5), the Exceptions inbox and model-backed AI (M6), and PDFs and outputs (M7). Until M2, part of each estate's detail is stored as JSON on the estate row.
 
 ## Run it locally
 
-Requires **Node.js 20.9 or later**.
+Needs Node.js 22 and Postgres 16.
 
 ```bash
 npm install
+cp .env.example .env.local          # then edit the database URLs
+# Fresh local database: migrate, set the runtime role's password, load demo firms
+DATABASE_ADMIN_URL=postgres://postgres:postgres@localhost:5432/waymark RUNTIME_DB_PASSWORD=<16+ chars> npm run e2e:db
 npm run dev
 ```
 
-Open http://localhost:3000 and choose a side:
+Sign in at http://localhost:3000/sign-in:
+- **Staff:** `priya.shah@ellis-rowe.example` with password `waymark-demo-password` (or `SEED_STAFF_PASSWORD`).
+- **Family:** `sarah.ellis@example.com`, then open http://localhost:3000/dev/outbox to follow the magic link.
+- A second firm (Hartley Moss: `owen.price@hartley-moss.example`) shows that firms can't see each other's data.
 
-| Route | What it is | Design ref |
-|---|---|---|
-| `/` | Demo entry: pick practice or portal, reset demo data | – |
-| `/practice` | Practice dashboard: filter tabs, search, stage/fee-earner/sort, "who we're waiting on", assistant queue, **New estate** | Key Screens 1b |
-| `/practice/estate?id=ellis` | Estate workspace: stage strip, 10 tabs, tasks, ledger, IHT, parties, documents, notes, audit trail, messages, plus the **assistant panel** (Draft / Extract / Missing / Summary / Ask) | Solicitor Workspace 3a |
-| `/practice/estates` | Caseload as a dense table | – |
-| `/practice/tasks`, `/documents`, `/letters`, `/drafts`, `/settings` | Cross-estate views | – |
-| `/portal` | Client journey: today's step, the winding 7-stage path, honest timeline, plain-English terms | Key Screens 1a |
-| `/portal/welcome` | Onboarding (4 steps) | Client Screens 2a |
-| `/portal/step` | Today's step, with add-an-account sheet | 2b |
-| `/portal/documents` | Document vault with camera/file upload | 2c |
-| `/portal/assets` | What they owned and owed, add something | 2d |
-| `/portal/messages` | Messages with the solicitor + "Ask Waymark" general-guidance assistant | 2e |
-| `/portal/updates` | What's been done on their behalf | 2f |
+For the browser-only demo: `npm run build:demo` and serve `out/`.
 
-**Try this:** open `/practice/estate?id=ellis` in one tab and `/portal` in another. Approve the Barclays draft and the family gets an update. Upload the funeral invoice in the portal and a "Check funeral invoice" task appears for Priya. Tabs stay in sync.
+## Tests
 
-## What's real and what's mocked
+| Command | What |
+|---|---|
+| `npm run lint`, `npm run typecheck` | ESLint (Next + React hooks rules) and TypeScript strict |
+| `npx vitest run` | Unit tests and database tests (RLS, audit chain, job queue). Needs a migrated database: set `DATABASE_URL` (runtime) and `DATABASE_ADMIN_URL` (owner) |
+| `npx playwright test` | Live E2E at 1440px and 390px: sign-in, access rules, approve → audit → family update, upload → firm task. Run `npm run build` and `npm run e2e:db` first |
+| `E2E_MODE=demo npx playwright test` | Demo build E2E (after `build:demo`) |
 
-Real, working now:
-- Every screen in the handoff, responsive from 360px to wide desktop.
-- Shared state across practice and portal (approvals, uploads, messages, assets, tasks, notes, audit entries), persisted in the browser's localStorage and synced across tabs.
-- Human-in-the-loop rules: nothing an AI draft produces is "sent" until a solicitor approves it; extracted fields flagged low-confidence must be ticked before they're added; every approval and edit is written to the audit trail.
-- Live IHT estimate from the ledger (NRB £325k + RNRB £175k when a home is present).
-- Validation, empty states, keyboard focus states, labelled controls, `prefers-reduced-motion`.
+CI (`.github/workflows/ci.yml`) runs all of these on every PR against Postgres 16.
 
-Mocked (deliberately, behind clear seams):
-- **Data**: seeded in `src/lib/seed.ts`; the reducer in `src/lib/store.tsx` is the stand-in for an API. Action names map 1:1 to future endpoints.
-- **Assistant**: `src/lib/assistant.ts` is rule-based so the demo works offline. Swap it for a model-backed endpoint that returns the same `{ paragraphs, handoff }` shape.
-- **Uploads**: files aren't stored; only the file name is recorded.
-- **Auth**: the demo signs you in as Priya Shah (practice) or Sarah Ellis (portal).
-- **Sending**: "Approve & send" changes status and logs it; nothing leaves the app.
+## Deploying
+
+See `docs/deploy.md`: Neon (London), S3 (London), Postmark and Vercel, set up from their dashboards, with database migrations run from the **Production database** GitHub Action.
 
 ## Project structure
 
 ```
 src/
-  app/                    Next.js App Router routes (practice/*, portal/*)
-  components/
-    brand/Cairn.tsx       The cairn mark and wordmark (brand direction 4a)
-    ui/                   Primitives (buttons, stage bar, avatar) and the Sheet modal
-    practice/             Practice shell, estate card, workspace sections, assistant panel
-    portal/               Portal shell, bottom nav, journey path
-    shared/               Add-asset sheet and asset/document metadata
-  lib/
-    types.ts              Domain model (shaped like DB rows; money in pence)
-    seed.ts               Demo data: Margaret Ellis + 8 other estates
-    store.tsx             Shared reducer, persistence, cross-tab sync
-    selectors.ts          Derived values: IHT, totals, waiting-on counts, summaries
-    assistant.ts          Assistant seam (client guidance + firm Q&A)
-    stages.ts             The 7 stages and colour semantics
-design-handoff/           Original design files (open the .dc.html files in a browser)
+  app/            Routes. *.live.tsx = live only, *.demo.tsx = demo only
+  components/     UI (brand, ui primitives, practice, portal, auth, shared)
+  db/             Drizzle schema and client (withTenant, admin connection)
+  lib/            Shared client logic: reducer, store, selectors, assistant seam, types
+  server/         Server-only: actions, auth, audit, files, jobs, mail, viewer, env
+scripts/          migrate, seed, reset, runtime-role, e2e-db
+drizzle/          SQL migrations (generated + hand-written roles, RLS, triggers)
+tests/            Vitest unit and database tests
+e2e/              Playwright (live and demo)
+docs/             v2 plan, deploy guide
+design-handoff/   Original design files
 ```
 
-Design tokens live in `src/app/globals.css` under `@theme` (Tailwind v4). Colour carries meaning everywhere: **teal** done/primary, **coral** now/attention, **amber** waiting on the family, **plum** third parties and AI. Never put coral or amber text on light backgrounds; use the `-ink` variants.
-
-Icons are Phosphor, via `react-icons/pi`.
-
-## Suggested next steps
-
-1. **Backend and auth**: Postgres (Prisma or Drizzle) with firm → estate → party tenancy; separate roles for fee earners, paralegals and clients; magic-link sign-in for executors. Replace `useActions()` internals with API calls.
-2. **Audit log**: append-only table written server-side on every mutation (the UI already shows it).
-3. **Document storage**: UK-region object storage, virus scanning, signed URLs; keep the "checking → accepted" workflow.
-4. **Assistant**: model-backed drafting and extraction behind the existing review gates; store sources with every draft; keep the client assistant to general guidance with a handoff to the solicitor.
-5. **Firm branding**: per-firm name, colours and logo for the portal (Settings page has a preview).
-6. **Compliance**: confirm the security claims in the handoff (UK data residency, encryption, ID checks) before anything is said publicly.
-7. **Marketing site**: the landing page in `design-handoff/designs/Waymark - Landing Page.dc.html` is fully specified and not built yet.
+Design tokens live in `src/app/globals.css` under `@theme`. Colour carries meaning everywhere: **teal** done/primary, **coral** now/attention, **amber** waiting on the family, **plum** third parties and AI. Fonts (Newsreader, Figtree) are self-hosted. Icons are Phosphor via `react-icons/pi`.

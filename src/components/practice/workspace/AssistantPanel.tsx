@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 import {
   PiArrowRightBold,
   PiCaretLeftBold,
@@ -55,11 +55,13 @@ function DraftView({ estate, focusId }: { estate: Estate; focusId?: string }) {
   const [text, setText] = useState("");
   const [justSent, setJustSent] = useState<Draft | null>(null);
 
-  useEffect(() => {
-    if (!focusId) return;
-    const i = review.findIndex((d) => d.id === focusId);
+  // Jump to a draft linked from elsewhere (adjusting state during render, not in an effect).
+  const [seenFocus, setSeenFocus] = useState<string | undefined>(undefined);
+  if (focusId !== seenFocus) {
+    setSeenFocus(focusId);
+    const i = focusId ? review.findIndex((x) => x.id === focusId) : -1;
     if (i >= 0) setIdx(i);
-  }, [focusId]);
+  }
 
   const d = review[Math.min(idx, review.length - 1)];
   const sent = estate.drafts.filter((x) => x.status === "sent");
@@ -306,15 +308,20 @@ export function AssistantPanel({ state, estate, initialTab = "draft", focusDraft
   const [q, setQ] = useState("");
   const [thread, setThread] = useState<{ q: string; a: string[] }[]>([]);
 
-  useEffect(() => setTab(initialTab), [initialTab]);
+  // Follow the tab requested by a deep link.
+  const [seenInitial, setSeenInitial] = useState(initialTab);
+  if (initialTab !== seenInitial) {
+    setSeenInitial(initialTab);
+    setTab(initialTab);
+  }
 
   // Jump to the Draft tab when a new draft appears (e.g. from the Missing tab).
   const reviewCount = estate.drafts.filter((d) => d.status === "review").length;
   const [prevCount, setPrevCount] = useState(reviewCount);
-  useEffect(() => {
-    if (reviewCount > prevCount) setTab("draft");
+  if (reviewCount !== prevCount) {
     setPrevCount(reviewCount);
-  }, [reviewCount]);
+    if (reviewCount > prevCount) setTab("draft");
+  }
 
   const counts: Partial<Record<AiTab, number>> = {
     draft: reviewCount,

@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { PiArrowRightBold, PiChatCircleText, PiXBold } from "react-icons/pi";
 import { JourneyPath } from "@/components/portal/JourneyPath";
 import { BottomNav, PortalBrand } from "@/components/portal/PortalShell";
 import { Avatar, btn } from "@/components/ui/primitives";
 import { clientParty, feeEarner, firstName, openFamilyTasks } from "@/lib/selectors";
-import { useClientEstate, useDemo } from "@/lib/store";
+import { useClientEstate, useDemo, useStore } from "@/lib/store";
 import { greeting, numberWord } from "@/lib/format";
 import { useNow } from "@/lib/useNow";
 
@@ -16,6 +17,12 @@ export default function Journey() {
   const estate = useClientEstate();
   const now = useNow();
   const [termOpen, setTermOpen] = useState(false);
+  const { mode } = useStore();
+  const router = useRouter();
+  // First visit after accepting the invite: start with onboarding.
+  useEffect(() => {
+    if (mode === "live" && !state.onboarded) router.replace("/portal/welcome");
+  }, [mode, state.onboarded, router]);
   const me = clientParty(estate);
   const sol = feeEarner(state, estate);
   const solFirst = firstName(sol.name);

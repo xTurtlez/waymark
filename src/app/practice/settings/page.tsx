@@ -4,11 +4,12 @@ import { PiArrowCounterClockwiseBold } from "react-icons/pi";
 import { Cairn } from "@/components/brand/Cairn";
 import { PracticePage } from "@/components/practice/PracticeShell";
 import { Avatar, btn } from "@/components/ui/primitives";
-import { useActions, useDemo } from "@/lib/store";
+import { useActions, useDemo, useStore } from "@/lib/store";
 
 export default function SettingsPage() {
   const state = useDemo();
   const { reset } = useActions();
+  const { mode } = useStore();
   return (
     <PracticePage eyebrow={state.firm.name} title="Settings">
       <div className="grid items-start gap-[18px] lg:grid-cols-2">
@@ -46,6 +47,7 @@ export default function SettingsPage() {
             ))}
           </ul>
         </section>
+        {mode === "demo" && (
         <section className="rounded-[22px] border border-line bg-paper p-6">
           <h2 className="m-0 font-serif text-xl font-medium">Demo data</h2>
           <p className="m-0 mt-2 text-sm leading-relaxed text-ink-3">This prototype keeps its data in your browser. Reset to return every estate to its starting state.</p>
@@ -53,6 +55,7 @@ export default function SettingsPage() {
             <PiArrowCounterClockwiseBold aria-hidden /> Reset demo data
           </button>
         </section>
+        )}
       </div>
     </PracticePage>
   );

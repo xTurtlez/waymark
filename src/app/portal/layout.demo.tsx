@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { PortalShell } from "@/components/portal/PortalShell";
+import { StoreProvider } from "@/lib/store";
 
 export const metadata: Metadata = {
   title: "Your estate",
@@ -13,5 +14,9 @@ export const viewport: Viewport = {
 };
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
-  return <PortalShell>{children}</PortalShell>;
+  return (
+    <StoreProvider mode="demo">
+      <PortalShell>{children}</PortalShell>
+    </StoreProvider>
+  );
 }

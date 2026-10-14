@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { PiArrowBendUpRight, PiFileText, PiInfoFill, PiPaperclip, PiPaperPlaneRightFill, PiSparkleFill } from "react-icons/pi";
 import { BottomNav, PortalBrand } from "@/components/portal/PortalShell";
 import { Avatar } from "@/components/ui/primitives";
@@ -10,14 +11,28 @@ import { useActions, useClientEstate, useDemo } from "@/lib/store";
 
 type Mode = "solicitor" | "ai";
 
-export default function Messages() {
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={null}>
+      <Messages />
+    </Suspense>
+  );
+}
+
+function Messages() {
+  const params = useSearchParams();
   const state = useDemo();
   const estate = useClientEstate();
   const { sendMessage } = useActions();
   const sol = feeEarner(state, estate);
   const solFirst = firstName(sol.name);
   const [mode, setMode] = useState<Mode>("solicitor");
-  const [text, setText] = useState("");
+  // Prefill from "I'm not sure which banks she used" on Today's step.
+  const [text, setText] = useState(() =>
+    params.get("compose") === "banks"
+      ? `I'm not sure which banks ${estate.deceased.firstName === "Margaret" ? "Mum" : estate.deceased.firstName} used. Could you help me find out?`
+      : "",
+  );
   const qa = (q: string) => {
     const r = clientAnswer(q, state, estate);
     return { q, a: r.paragraphs, handoff: r.handoff };
@@ -27,12 +42,6 @@ export default function Messages() {
   const [sentNote, setSentNote] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
-
-  // Prefill from "I'm not sure which banks she used" on Today's step.
-  useEffect(() => {
-    const sp = new URLSearchParams(window.location.search);
-    if (sp.get("compose") === "banks") setText(`I'm not sure which banks ${estate.deceased.firstName === "Margaret" ? "Mum" : estate.deceased.firstName} used. Could you help me find out?`);
-  }, [estate.deceased.firstName]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
@@ -61,7 +70,6 @@ export default function Messages() {
     setText(`${q.replace(/\?$/, "")}, for ${estate.deceased.firstName}'s estate?`);
   }
 
-  let lastDay = "";
   return (
     <>
       <div className="sticky top-0 z-10 border-b border-line bg-cream px-5 pb-3 pt-5">
@@ -92,9 +100,8 @@ export default function Messages() {
       <main className="flex flex-1 flex-col gap-3 px-4 pb-4 pt-4" aria-live="polite">
         {mode === "solicitor" ? (
           <>
-            {estate.messages.map((m) => {
-              const showDay = m.day !== lastDay;
-              lastDay = m.day;
+            {estate.messages.map((m, i) => {
+              const showDay = i === 0 || estate.messages[i - 1].day !== m.day;
               const mine = m.from === "client";
               return (
                 <div key={m.id} className="flex flex-col gap-3">

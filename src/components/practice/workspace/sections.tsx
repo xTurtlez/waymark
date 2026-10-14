@@ -348,13 +348,11 @@ export function MessagesCard({ state, estate }: { state: DemoState; estate: Esta
   const { sendMessage } = useActions();
   const [text, setText] = useState("");
   const client = partyById(estate, estate.clientPartyId);
-  let lastDay = "";
   return (
     <SectionCard title={`Messages with ${client?.name ?? "the family"}`} action={<span className="text-[13px] text-muted">Shown in their portal</span>}>
       <div className="mt-4 flex flex-col gap-3">
-        {estate.messages.map((m) => {
-          const showDay = m.day !== lastDay;
-          lastDay = m.day;
+        {estate.messages.map((m, i) => {
+          const showDay = i === 0 || estate.messages[i - 1].day !== m.day;
           const mine = m.from === "firm";
           const who = actor(state, estate, m.authorId);
           return (
