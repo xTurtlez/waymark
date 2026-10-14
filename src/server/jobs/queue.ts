@@ -1,5 +1,5 @@
-import { eq, sql } from "drizzle-orm";
-import { getDb, schema, type Db, type Tx } from "@/db/client";
+import { sql } from "drizzle-orm";
+import { getDb, type Db, type Tx } from "@/db/client";
 
 /**
  * Durable job queue on Postgres. `enqueue()` can run inside a tenant
@@ -27,17 +27,11 @@ export async function enqueue(
   db: Db | Tx,
   job: { firmId: string | null; kind: string; payload?: Record<string, unknown>; runAt?: Date; dedupeKey?: string; maxAttempts?: number },
 ) {
-  await db
-    .insert(schema.job)
-    .values({
-      firmId: job.firmId,
-      kind: job.kind,
-      payload: job.payload ?? {},
-      runAt: job.runAt ?? new Date(),
-      dedupeKey: job.dedupeKey,
-      maxAttempts: job.maxAttempts ?? 5,
-    })
-    .onConflictDoNothing({ target: schema.job.dedupeKey });
+  // Goes through job_enqueue() (SECURITY DEFINER): it checks the firm matches
+  // the tenant context and de-duplicates on dedupe_key.
+  await db.execute(
+    sql`select job_enqueue(${job.firmId}::uuid, ${job.kind}, ${JSON.stringify(job.payload ?? {})}::jsonb, ${(job.runAt ?? new Date()).toISOString()}::timestamptz, ${job.dedupeKey ?? null}, ${job.maxAttempts ?? 5})`,
+  );
 }
 
 /** Backoff: 30s, 2m, 8m, 32m, ... capped at 6h. */
@@ -63,22 +57,13 @@ export async function runDueJobs(opts: { limit?: number; worker?: string } = {})
     try {
       if (!handler) throw new Error(`No handler registered for "${job.kind}"`);
       await handler(job);
-      await db.update(schema.job).set({ status: "done", finishedAt: new Date(), lockedAt: null, lockedBy: null, lastError: null }).where(eq(schema.job.id, job.id));
+      await db.execute(sql`select job_finish(${job.id}::bigint, 'done'::job_status, null, null)`);
       results.push({ id: job.id, kind: job.kind, ok: true });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       const dead = job.attempts >= job.maxAttempts;
-      await db
-        .update(schema.job)
-        .set({
-          status: dead ? "dead" : "queued",
-          lastError: msg.slice(0, 2000),
-          lockedAt: null,
-          lockedBy: null,
-          runAt: new Date(Date.now() + backoffMs(job.attempts)),
-          finishedAt: dead ? new Date() : null,
-        })
-        .where(eq(schema.job.id, job.id));
+      const runAt = new Date(Date.now() + backoffMs(job.attempts)).toISOString();
+      await db.execute(sql`select job_finish(${job.id}::bigint, ${dead ? "dead" : "queued"}::job_status, ${msg.slice(0, 2000)}, ${runAt}::timestamptz)`);
       results.push({ id: job.id, kind: job.kind, ok: false, error: msg });
     }
   }

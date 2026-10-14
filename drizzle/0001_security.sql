@@ -11,17 +11,34 @@
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 --> statement-breakpoint
+-- Roles:
+--   owner (whoever runs migrations): owns every table. Used only by
+--     migrations, seed and admin scripts (DATABASE_ADMIN_URL). Never by the app.
+--   waymark_runtime: the app's LOGIN role (DATABASE_URL). Not an owner, not a
+--     superuser, no BYPASSRLS, NOINHERIT. It can use the auth tables and a few
+--     SECURITY DEFINER functions directly, and reaches tenant data only by
+--     SET LOCAL ROLE waymark_app inside withTenant(). It cannot SET ROLE to
+--     anything else. Its password is set by `npm run db:runtime-role`.
+--   waymark_app: NOLOGIN; the role every RLS policy targets.
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'waymark_app') THEN
     CREATE ROLE waymark_app NOLOGIN NOBYPASSRLS NOSUPERUSER NOINHERIT;
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'waymark_runtime') THEN
+    CREATE ROLE waymark_runtime NOLOGIN NOBYPASSRLS NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+  END IF;
 END $$;
 --> statement-breakpoint
--- Let the connecting role switch into waymark_app.
+GRANT waymark_app TO waymark_runtime;
+--> statement-breakpoint
+-- Admin scripts may also switch into waymark_app (e.g. to test policies).
 DO $$ BEGIN EXECUTE format('GRANT waymark_app TO %I', current_user); END $$;
 --> statement-breakpoint
-GRANT USAGE ON SCHEMA public TO waymark_app;
+GRANT USAGE ON SCHEMA public TO waymark_app, waymark_runtime;
+--> statement-breakpoint
+-- Better Auth tables are global (not tenant data) and used directly by the runtime role.
+GRANT SELECT, INSERT, UPDATE, DELETE ON "user", session, account, verification, two_factor, passkey TO waymark_runtime;
 --> statement-breakpoint
 
 -- ── Session context helpers ────────────────────────────────────────────────
@@ -166,6 +183,21 @@ ALTER TABLE outbound_message ENABLE ROW LEVEL SECURITY;
 --> statement-breakpoint
 CREATE POLICY outbound_insert ON outbound_message FOR INSERT TO waymark_app WITH CHECK (firm_id = app_firm_id());
 --> statement-breakpoint
+-- The mailer runs as the runtime role (sign-in links are not tenant data).
+GRANT SELECT, INSERT, UPDATE ON outbound_message TO waymark_runtime;
+--> statement-breakpoint
+CREATE POLICY outbound_runtime ON outbound_message FOR ALL TO waymark_runtime USING (true) WITH CHECK (true);
+--> statement-breakpoint
+-- System jobs (no firm) may be queued by the runtime role; claiming and
+-- finishing go through SECURITY DEFINER functions below.
+GRANT INSERT ON job TO waymark_runtime;
+--> statement-breakpoint
+GRANT USAGE ON SEQUENCE job_id_seq TO waymark_runtime;
+--> statement-breakpoint
+CREATE POLICY job_runtime_insert ON job FOR INSERT TO waymark_runtime WITH CHECK (firm_id IS NULL);
+--> statement-breakpoint
+-- New executors invited by staff get an auth user created by the runtime role (granted above).
+--> statement-breakpoint
 
 -- ── Append-only, hash-chained audit log ────────────────────────────────────
 -- The hashed payload is a fixed list of fields; jsonb text output is
@@ -237,9 +269,49 @@ END $$;
 REVOKE ALL ON FUNCTION audit_verify(uuid) FROM PUBLIC;
 --> statement-breakpoint
 
--- ── Job claiming (worker runs as the connecting role, outside tenant scope) ─
+-- ── Who is this user? (routing only; data still goes through RLS) ─────────
+CREATE OR REPLACE FUNCTION app_viewer_context(p_user text) RETURNS jsonb
+  LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+    SELECT jsonb_build_object(
+      'memberships', coalesce((
+        SELECT jsonb_agg(jsonb_build_object('id', m.id, 'firm_id', m.firm_id, 'role', m.role) ORDER BY m.created_at)
+        FROM membership m WHERE m.user_id = p_user AND m.active), '[]'::jsonb),
+      'parties', coalesce((
+        SELECT jsonb_agg(jsonb_build_object('id', p.id, 'firm_id', p.firm_id, 'estate_id', p.estate_id) ORDER BY p.created_at)
+        FROM estate_party p WHERE p.user_id = p_user), '[]'::jsonb)
+    )
+  $$;
+--> statement-breakpoint
+REVOKE ALL ON FUNCTION app_viewer_context(text) FROM PUBLIC;
+--> statement-breakpoint
+GRANT EXECUTE ON FUNCTION app_viewer_context(text) TO waymark_runtime;
+--> statement-breakpoint
+-- Verify every firm's chain; returns firms with a break.
+CREATE OR REPLACE FUNCTION audit_verify_all() RETURNS TABLE(firm_id uuid, firm_name text, first_broken bigint)
+  LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+    SELECT f.id, f.name, audit_verify(f.id) FROM firm f WHERE audit_verify(f.id) IS NOT NULL
+  $$;
+--> statement-breakpoint
+REVOKE ALL ON FUNCTION audit_verify_all() FROM PUBLIC;
+--> statement-breakpoint
+GRANT EXECUTE ON FUNCTION audit_verify_all() TO waymark_runtime;
+--> statement-breakpoint
+
+-- ── Job queue (claim/finish run as definer, outside tenant scope) ───────────
+CREATE OR REPLACE FUNCTION job_finish(p_id bigint, p_status job_status, p_error text, p_run_at timestamptz) RETURNS void
+  LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
+    UPDATE job SET status = p_status, last_error = p_error, run_at = coalesce(p_run_at, run_at),
+      locked_at = NULL, locked_by = NULL,
+      finished_at = CASE WHEN p_status IN ('done', 'dead') THEN now() ELSE NULL END
+    WHERE id = p_id
+  $$;
+--> statement-breakpoint
+REVOKE ALL ON FUNCTION job_finish(bigint, job_status, text, timestamptz) FROM PUBLIC;
+--> statement-breakpoint
+GRANT EXECUTE ON FUNCTION job_finish(bigint, job_status, text, timestamptz) TO waymark_runtime;
+--> statement-breakpoint
 CREATE OR REPLACE FUNCTION job_claim(p_worker text, p_limit int) RETURNS SETOF job
-  LANGUAGE sql AS $$
+  LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
     -- Requeue jobs whose worker died mid-run.
     WITH stale AS (
       UPDATE job SET status = 'queued', locked_at = NULL, locked_by = NULL
@@ -256,3 +328,26 @@ CREATE OR REPLACE FUNCTION job_claim(p_worker text, p_limit int) RETURNS SETOF j
     )
     RETURNING *
   $$;
+--> statement-breakpoint
+REVOKE ALL ON FUNCTION job_claim(text, int) FROM PUBLIC;
+--> statement-breakpoint
+GRANT EXECUTE ON FUNCTION job_claim(text, int) TO waymark_runtime;
+--> statement-breakpoint
+-- Enqueue with de-duplication. ON CONFLICT under RLS would need a SELECT
+-- policy on job, which neither role has (by design), so the insert runs as
+-- definer after checking the caller may queue for this firm: firm jobs only
+-- for the firm in the current tenant context, system jobs (NULL) otherwise.
+CREATE OR REPLACE FUNCTION job_enqueue(p_firm uuid, p_kind text, p_payload jsonb, p_run_at timestamptz, p_dedupe text, p_max int) RETURNS void
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF p_firm IS NOT NULL AND p_firm IS DISTINCT FROM app_firm_id() THEN
+    RAISE EXCEPTION 'job_enqueue: firm % is not the current tenant', p_firm USING ERRCODE = '42501';
+  END IF;
+  INSERT INTO job (firm_id, kind, payload, run_at, dedupe_key, max_attempts)
+  VALUES (p_firm, p_kind, coalesce(p_payload, '{}'::jsonb), coalesce(p_run_at, now()), p_dedupe, coalesce(p_max, 5))
+  ON CONFLICT (dedupe_key) DO NOTHING;
+END $$;
+--> statement-breakpoint
+REVOKE ALL ON FUNCTION job_enqueue(uuid, text, jsonb, timestamptz, text, int) FROM PUBLIC;
+--> statement-breakpoint
+GRANT EXECUTE ON FUNCTION job_enqueue(uuid, text, jsonb, timestamptz, text, int) TO waymark_app, waymark_runtime;

@@ -1,6 +1,6 @@
 import { hashPassword } from "better-auth/crypto";
 import { eq } from "drizzle-orm";
-import { closeDb, getDb, schema } from "../src/db/client";
+import { closeDb, getAdminDb, schema } from "../src/db/client";
 import { freshSeed } from "../src/lib/seed";
 import type { Estate } from "../src/lib/types";
 import { enqueue } from "../src/server/jobs/queue";
@@ -14,7 +14,7 @@ import { enqueue } from "../src/server/jobs/queue";
  * Idempotent: firms that already exist are left alone.
  */
 
-type Db = ReturnType<typeof getDb>;
+type Db = ReturnType<typeof getAdminDb>;
 const PASSWORD = process.env.SEED_STAFF_PASSWORD || "waymark-demo-password";
 
 export const SEED_USERS = {
@@ -167,7 +167,7 @@ async function seedHartleyMoss(db: Db) {
 }
 
 async function main() {
-  const db = getDb();
+  const db = getAdminDb();
   await seedEllisRowe(db);
   await seedHartleyMoss(db);
   const tomorrow = new Date();

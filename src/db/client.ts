@@ -6,15 +6,20 @@ import * as schema from "./schema";
 /**
  * Database access.
  *
- * `db` is the privileged connection (used by auth, migrations, the job
- * runner and seeding). Request code must use `withTenant()`, which switches
- * to the `waymark_app` role so Postgres row-level security applies.
+ * Two connections:
+ * - `getDb()` connects as DATABASE_URL, which in every deployed environment is
+ *   the `waymark_runtime` login: not a table owner, no BYPASSRLS. It can use the
+ *   auth tables and a few SECURITY DEFINER functions directly; everything else
+ *   goes through `withTenant()`, which switches to `waymark_app` so row-level
+ *   security applies.
+ * - `getAdminDb()` connects as DATABASE_ADMIN_URL (the owner). Only migrations,
+ *   seeding, admin scripts and test fixtures use it. Never request code.
  */
 
 export type Db = PostgresJsDatabase<typeof schema>;
 export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 
-const g = globalThis as unknown as { __waymarkSql?: postgres.Sql; __waymarkDb?: Db };
+const g = globalThis as unknown as { __waymarkSql?: postgres.Sql; __waymarkDb?: Db; __waymarkAdminSql?: postgres.Sql; __waymarkAdminDb?: Db };
 
 export function databaseUrl(): string {
   const url = process.env.DATABASE_URL;
@@ -33,6 +38,19 @@ export function getSql(): postgres.Sql {
 export function getDb(): Db {
   if (!g.__waymarkDb) g.__waymarkDb = drizzle(getSql(), { schema });
   return g.__waymarkDb;
+}
+
+/** Owner connection for migrations, seed, admin scripts and test fixtures. Falls back to DATABASE_URL. */
+export function adminDatabaseUrl(): string {
+  return process.env.DATABASE_ADMIN_URL || databaseUrl();
+}
+
+export function getAdminDb(): Db {
+  if (!g.__waymarkAdminDb) {
+    g.__waymarkAdminSql = postgres(adminDatabaseUrl(), { max: 3, prepare: false, onnotice: () => {} });
+    g.__waymarkAdminDb = drizzle(g.__waymarkAdminSql, { schema });
+  }
+  return g.__waymarkAdminDb;
 }
 
 export type TenantScope = "firm" | "portal";
@@ -58,8 +76,11 @@ export async function withTenant<T>(ctx: TenantContext, fn: (tx: Tx) => Promise<
 
 export async function closeDb() {
   if (g.__waymarkSql) await g.__waymarkSql.end({ timeout: 5 });
+  if (g.__waymarkAdminSql) await g.__waymarkAdminSql.end({ timeout: 5 });
   g.__waymarkSql = undefined;
   g.__waymarkDb = undefined;
+  g.__waymarkAdminSql = undefined;
+  g.__waymarkAdminDb = undefined;
 }
 
 export { schema };

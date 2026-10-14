@@ -1,8 +1,8 @@
 import { migrate } from "drizzle-orm/postgres-js/migrator";
-import { closeDb, getDb } from "../src/db/client";
+import { closeDb, getAdminDb } from "../src/db/client";
 
 async function main() {
-  await migrate(getDb(), { migrationsFolder: "drizzle" });
+  await migrate(getAdminDb(), { migrationsFolder: "drizzle" });
   console.log("Migrations applied.");
   await closeDb();
 }

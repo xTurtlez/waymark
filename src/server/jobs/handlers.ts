@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { getDb, schema } from "@/db/client";
+import { getDb } from "@/db/client";
 import { enqueue, registerJob } from "./queue";
 
 /**
@@ -10,12 +10,8 @@ import { enqueue, registerJob } from "./queue";
 /** Recompute every firm's audit hash chain; schedule tomorrow's run. */
 registerJob("audit.verify", async () => {
   const db = getDb();
-  const firms = await db.select({ id: schema.firm.id, name: schema.firm.name }).from(schema.firm);
-  const broken: string[] = [];
-  for (const f of firms) {
-    const [row] = (await db.execute(sql`select audit_verify(${f.id}::uuid) as first_broken`)) as unknown as Array<{ first_broken: number | null }>;
-    if (row?.first_broken != null) broken.push(`${f.name} (seq ${row.first_broken})`);
-  }
+  const rows = (await db.execute(sql`select firm_name, first_broken from audit_verify_all()`)) as unknown as Array<{ firm_name: string; first_broken: number }>;
+  const broken = rows.map((r) => `${r.firm_name} (seq ${r.first_broken})`);
   const tomorrow = new Date();
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
   tomorrow.setUTCHours(2, 0, 0, 0);

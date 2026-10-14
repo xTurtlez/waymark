@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { cache } from "react";
 import { getDb, schema, type TenantContext } from "@/db/client";
@@ -35,11 +35,12 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   const u = session.user;
   const db = getDb();
 
-  const [m] = await db
-    .select()
-    .from(schema.membership)
-    .where(and(eq(schema.membership.userId, u.id), eq(schema.membership.active, true)))
-    .limit(1);
+  // Routing lookup through a SECURITY DEFINER function: the runtime role
+  // cannot read membership or estate_party directly.
+  const [ctx] = (await db.execute(sql`select app_viewer_context(${u.id}) as c`)) as unknown as Array<{
+    c: { memberships: Array<{ id: string; firm_id: string; role: StaffViewer["role"] }>; parties: Array<{ id: string; firm_id: string; estate_id: string }> };
+  }>;
+  const m = ctx?.c.memberships[0];
   if (m) {
     const [tf] = await db.select({ id: schema.twoFactor.id }).from(schema.twoFactor).where(eq(schema.twoFactor.userId, u.id)).limit(1);
     const pks = await db.select({ id: schema.passkey.id }).from(schema.passkey).where(eq(schema.passkey.userId, u.id));
@@ -48,17 +49,17 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
       userId: u.id,
       name: u.name,
       email: u.email,
-      firmId: m.firmId,
+      firmId: m.firm_id,
       membershipId: m.id,
       role: m.role,
       mfa: { totp: Boolean(u.twoFactorEnabled) && Boolean(tf), passkeys: pks.length },
     };
   }
 
-  const parties = await db.select().from(schema.estateParty).where(eq(schema.estateParty.userId, u.id));
+  const parties = ctx?.c.parties ?? [];
   if (parties.length) {
-    const firmId = parties[0].firmId;
-    return { kind: "family", userId: u.id, name: u.name, email: u.email, firmId, estateIds: parties.filter((p) => p.firmId === firmId).map((p) => p.estateId) };
+    const firmId = parties[0].firm_id;
+    return { kind: "family", userId: u.id, name: u.name, email: u.email, firmId, estateIds: parties.filter((p) => p.firm_id === firmId).map((p) => p.estate_id) };
   }
   return { kind: "none", userId: u.id, name: u.name, email: u.email };
 });

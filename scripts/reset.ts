@@ -1,10 +1,10 @@
 import { sql } from "drizzle-orm";
-import { closeDb, getDb } from "../src/db/client";
+import { closeDb, getAdminDb } from "../src/db/client";
 
 /** Drop everything in the public schema (dev/CI only) and re-run migrations. */
 async function main() {
   if (process.env.NODE_ENV === "production" && !process.env.ALLOW_DB_RESET) throw new Error("Refusing to reset a production database.");
-  const db = getDb();
+  const db = getAdminDb();
   await db.execute(sql`drop schema if exists public cascade`);
   await db.execute(sql`drop schema if exists drizzle cascade`);
   await db.execute(sql`create schema public`);
