@@ -7,6 +7,7 @@ import { PracticePage } from "@/components/practice/PracticeShell";
 import { TONE_CHIP } from "@/lib/stages";
 import { firstName, partyById, staffById } from "@/lib/selectors";
 import { useActions, useDemo } from "@/lib/store";
+import { dayLabel, dueInfo } from "@/lib/format";
 
 type Scope = "mine" | "firm" | "family" | "done";
 
@@ -22,7 +23,10 @@ export default function TasksPage() {
     family: all.filter(({ t }) => !t.done && t.owner.kind === "family"),
     done: all.filter(({ t }) => t.done),
   } satisfies Record<Scope, typeof all>;
-  const list = [...pick[scope]].sort((a, b) => Number(!!b.t.overdue) - Number(!!a.t.overdue) || Number(b.t.due === "Today") - Number(a.t.due === "Today"));
+  const list = [...pick[scope]].sort((a, b) => {
+    if (scope === "done") return (b.t.doneAt ?? "") < (a.t.doneAt ?? "") ? -1 : 1;
+    return (a.t.dueOn ?? "9999") < (b.t.dueOn ?? "9999") ? -1 : (a.t.dueOn ?? "9999") > (b.t.dueOn ?? "9999") ? 1 : 0;
+  });
 
   const scopes: { id: Scope; label: string }[] = [
     { id: "mine", label: "Mine" },
@@ -75,7 +79,7 @@ export default function TasksPage() {
                 </Link>
               </div>
               <span className={`hidden whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold sm:inline ${chip.cls}`}>{chip.label}</span>
-              <span className={`text-right text-[13px] font-medium ${t.overdue && !t.done ? "text-coral-ink" : "text-muted"}`}>{t.done ? t.doneOn ?? "Done" : t.due}</span>
+              <span className={`text-right text-[13px] font-medium ${dueInfo(t.dueOn, t.done).overdue ? "text-coral-ink" : "text-muted"}`}>{t.done ? (t.doneAt ? dayLabel(t.doneAt) : "Done") : dueInfo(t.dueOn, t.done).label}</span>
             </li>
           );
         })}

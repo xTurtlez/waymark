@@ -11,6 +11,7 @@ import { clientParty, feeEarner, firstName, openFamilyTasks } from "@/lib/select
 import { useClientEstate, useDemo, useStore } from "@/lib/store";
 import { greeting, numberWord } from "@/lib/format";
 import { useNow } from "@/lib/useNow";
+import { journeyTimeline } from "@/lib/derive";
 
 export default function Journey() {
   const state = useDemo();
@@ -30,7 +31,8 @@ export default function Journey() {
   const needsYou = openFamilyTasks(estate).length;
   const evening = now ? now.getHours() >= 18 : false;
   const behind = estate.stage;
-  const progressPct = Math.min(95, Math.max(5, Math.round(((estate.monthsIn ?? 3) / 10.5) * 100)));
+  const timeline = journeyTimeline(estate);
+  const progressPct = timeline.pct;
 
   return (
     <>
@@ -75,21 +77,21 @@ export default function Journey() {
           </div>
           <p className="m-0 mt-1.5 text-[15px] leading-normal text-muted">Seven stages. {solFirst} handles most of them for you.</p>
         </section>
-        <JourneyPath stage={estate.stage} needsYou={needsYou} />
+        <JourneyPath estate={estate} needsYou={needsYou} />
 
         <section className="mx-4 mt-3 rounded-[28px] border border-line bg-paper p-[22px]">
           <h2 className="m-0 font-serif text-[22px] font-medium">An honest timeline</h2>
           <p className="m-0 mt-2 text-base leading-normal text-ink-2">
-            Estates like {estate.deceased.firstName}&apos;s usually take <b>{estate.typicalDuration ?? "9 to 12 months"}</b>. You&apos;re about {estate.monthsIn ?? 3} months in.
+            Estates like {estate.deceased.firstName}&apos;s usually take <b>{timeline.typical}</b>. {timeline.monthsIn > 0 ? <>You&apos;re about {timeline.monthsIn} month{timeline.monthsIn === 1 ? "" : "s"} in.</> : <>You&apos;re just getting started.</>}
           </p>
           <div className="relative mt-[18px] h-3 rounded-full bg-line-soft" role="img" aria-label={`About ${progressPct}% of the way through`}>
             <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${progressPct}%`, background: "linear-gradient(90deg,#0E5F5B,#E3A13A)" }} />
             <div className="absolute -top-[5px] -ml-[11px] size-[22px] rounded-full border-4 border-paper bg-coral" style={{ left: `${progressPct}%` }} />
           </div>
           <div className="mt-2 flex justify-between text-[13px] font-medium text-muted">
-            <span>Jun 2026</span>
+            <span>{timeline.startLabel}</span>
             <span>Now</span>
-            <span>Spring 2027</span>
+            <span>{timeline.endLabel}</span>
           </div>
           <p className="m-0 mt-4 text-[15px] leading-[1.55] text-ink-3">
             Once any tax is settled, {solFirst} applies for the{" "}

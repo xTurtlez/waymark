@@ -8,6 +8,7 @@ import { Avatar } from "@/components/ui/primitives";
 import { CLIENT_SUGGESTIONS, clientAnswer } from "@/lib/assistant";
 import { feeEarner, firstName } from "@/lib/selectors";
 import { useActions, useClientEstate, useDemo } from "@/lib/store";
+import { dayHeading, isoDay, timeLabel } from "@/lib/format";
 
 type Mode = "solicitor" | "ai";
 
@@ -101,15 +102,15 @@ function Messages() {
         {mode === "solicitor" ? (
           <>
             {estate.messages.map((m, i) => {
-              const showDay = i === 0 || estate.messages[i - 1].day !== m.day;
+              const showDay = i === 0 || isoDay(estate.messages[i - 1].sentAt) !== isoDay(m.sentAt);
               const mine = m.from === "client";
               return (
                 <div key={m.id} className="flex flex-col gap-3">
-                  {showDay && <div className="text-center text-xs font-semibold text-muted">{m.day}</div>}
+                  {showDay && <div className="text-center text-xs font-semibold text-muted">{dayHeading(m.sentAt)}</div>}
                   <div className={`max-w-[84%] px-4 py-3.5 text-base leading-[1.45] ${mine ? "self-end rounded-[22px_22px_6px_22px] bg-teal text-paper" : "self-start rounded-[22px_22px_22px_6px] border border-line bg-paper"}`}>
                     {m.text}
                     <div className={`mt-1.5 text-xs ${mine ? "text-[#B9D6D0]" : "text-muted"}`}>
-                      {mine ? m.at : `${solFirst} · ${m.at}`}
+                      {mine ? timeLabel(m.sentAt) : `${solFirst} · ${timeLabel(m.sentAt)}`}
                     </div>
                   </div>
                   {m.attachment && (

@@ -8,12 +8,10 @@ export async function POST(req: Request) {
   const form = await req.formData().catch(() => null);
   const file = form?.get("file");
   const estate = form?.get("estate");
-  const documentKey = form?.get("documentKey");
   if (!(file instanceof File) || typeof estate !== "string") return NextResponse.json({ error: "No file received." }, { status: 400 });
   try {
     const out = await storeUpload(viewer, file, {
       estateSlug: estate,
-      documentKey: typeof documentKey === "string" && /^[\w-]{1,80}$/.test(documentKey) ? documentKey : undefined,
       ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
       userAgent: req.headers.get("user-agent"),
     });

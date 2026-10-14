@@ -6,6 +6,7 @@ import { PracticePage } from "@/components/practice/PracticeShell";
 import { btn } from "@/components/ui/primitives";
 import { pendingDrafts } from "@/lib/selectors";
 import { useActions, useDemo } from "@/lib/store";
+import { stampLabel } from "@/lib/format";
 
 export default function DraftsPage() {
   const state = useDemo();
@@ -23,7 +24,7 @@ export default function DraftsPage() {
               <span className="inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-dashed border-plum px-[11px] py-[5px] text-[12.5px] font-semibold text-plum">
                 <PiSparkleFill aria-hidden /> Draft · needs review
               </span>
-              <span className="text-xs text-muted">{draft.createdAt}</span>
+              <span className="text-xs text-muted">{stampLabel(draft.createdAt)}</span>
             </div>
             <div>
               <h2 className="m-0 font-serif text-xl font-medium">{draft.title}</h2>

@@ -38,7 +38,7 @@ DO $$ BEGIN EXECUTE format('GRANT waymark_app TO %I', current_user); END $$;
 GRANT USAGE ON SCHEMA public TO waymark_app, waymark_runtime;
 --> statement-breakpoint
 -- Better Auth tables are global (not tenant data) and used directly by the runtime role.
-GRANT SELECT, INSERT, UPDATE, DELETE ON "user", session, account, verification, two_factor, passkey TO waymark_runtime;
+GRANT SELECT, INSERT, UPDATE, DELETE ON "user", session, account, verification, two_factor, passkey, rate_limit TO waymark_runtime;
 --> statement-breakpoint
 
 -- ── Session context helpers ────────────────────────────────────────────────
@@ -132,7 +132,7 @@ CREATE POLICY estate_read ON estate FOR SELECT TO waymark_app USING (app_can_see
 CREATE POLICY estate_insert ON estate FOR INSERT TO waymark_app
   WITH CHECK (firm_id = app_firm_id() AND app_scope() = 'firm');
 --> statement-breakpoint
--- Families change their own estate's workspace (uploads, messages, assets);
+-- Families touch their own estate row when they act (version bump under a row lock);
 -- the server action layer limits which actions they may run.
 CREATE POLICY estate_update ON estate FOR UPDATE TO waymark_app
   USING (app_can_see(firm_id, id)) WITH CHECK (app_can_see(firm_id, id));
@@ -351,3 +351,155 @@ END $$;
 REVOKE ALL ON FUNCTION job_enqueue(uuid, text, jsonb, timestamptz, text, int) FROM PUBLIC;
 --> statement-breakpoint
 GRANT EXECUTE ON FUNCTION job_enqueue(uuid, text, jsonb, timestamptz, text, int) TO waymark_app, waymark_runtime;
+--> statement-breakpoint
+-- ════════════════════════════════════════════════════════════════════════
+-- Milestone 2: the estate record. Same model as above: every row carries
+-- firm_id + estate_id; families see their own estates only, and only the
+-- tables they need (holdings, documents, messages, updates, milestones,
+-- their own tasks). Notes, drafts, extractions, the will and the ledger are
+-- firm-only. The app never deletes estate records (no DELETE grants).
+-- ════════════════════════════════════════════════════════════════════════
+--> statement-breakpoint
+GRANT SELECT, INSERT, UPDATE ON holding TO waymark_app;
+--> statement-breakpoint
+GRANT SELECT, INSERT, UPDATE ON document TO waymark_app;
+--> statement-breakpoint
+GRANT SELECT, INSERT, UPDATE ON message TO waymark_app;
+--> statement-breakpoint
+GRANT SELECT, INSERT, UPDATE ON will TO waymark_app;
+--> statement-breakpoint
+GRANT SELECT, INSERT, UPDATE ON will_gift TO waymark_app;
+--> statement-breakpoint
+GRANT SELECT, INSERT, UPDATE ON ledger_entry TO waymark_app;
+--> statement-breakpoint
+GRANT SELECT, INSERT, UPDATE ON extraction TO waymark_app;
+--> statement-breakpoint
+GRANT SELECT, INSERT, UPDATE ON draft TO waymark_app;
+--> statement-breakpoint
+GRANT SELECT, INSERT, UPDATE ON missing_item TO waymark_app;
+--> statement-breakpoint
+GRANT SELECT, INSERT, UPDATE ON note TO waymark_app;
+--> statement-breakpoint
+GRANT SELECT, INSERT, UPDATE ON task TO waymark_app;
+--> statement-breakpoint
+GRANT SELECT, INSERT, UPDATE ON milestone TO waymark_app;
+--> statement-breakpoint
+GRANT SELECT, INSERT, UPDATE ON client_update TO waymark_app;
+--> statement-breakpoint
+GRANT SELECT, INSERT, UPDATE ON estate_staff TO waymark_app;
+--> statement-breakpoint
+-- The institution directory is shared reference data: read-only to the app.
+--> statement-breakpoint
+GRANT SELECT ON institution TO waymark_app;
+--> statement-breakpoint
+ALTER TABLE institution ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY institution_read ON institution FOR SELECT TO waymark_app USING (true);
+--> statement-breakpoint
+ALTER TABLE holding ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY holding_read ON holding FOR SELECT TO waymark_app USING (app_can_see(firm_id, estate_id));
+--> statement-breakpoint
+CREATE POLICY holding_insert ON holding FOR INSERT TO waymark_app WITH CHECK (app_can_see(firm_id, estate_id));
+--> statement-breakpoint
+CREATE POLICY holding_update ON holding FOR UPDATE TO waymark_app USING (app_can_see(firm_id, estate_id)) WITH CHECK (app_can_see(firm_id, estate_id));
+--> statement-breakpoint
+ALTER TABLE document ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY document_read ON document FOR SELECT TO waymark_app USING (app_can_see(firm_id, estate_id));
+--> statement-breakpoint
+CREATE POLICY document_insert ON document FOR INSERT TO waymark_app WITH CHECK (app_can_see(firm_id, estate_id));
+--> statement-breakpoint
+CREATE POLICY document_update ON document FOR UPDATE TO waymark_app USING (app_can_see(firm_id, estate_id)) WITH CHECK (app_can_see(firm_id, estate_id));
+--> statement-breakpoint
+ALTER TABLE message ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY message_read ON message FOR SELECT TO waymark_app USING (app_can_see(firm_id, estate_id));
+--> statement-breakpoint
+CREATE POLICY message_insert ON message FOR INSERT TO waymark_app WITH CHECK (app_can_see(firm_id, estate_id));
+--> statement-breakpoint
+CREATE POLICY message_update ON message FOR UPDATE TO waymark_app USING (app_can_see(firm_id, estate_id)) WITH CHECK (app_can_see(firm_id, estate_id));
+--> statement-breakpoint
+ALTER TABLE will ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY will_firm ON will FOR ALL TO waymark_app
+  USING (firm_id = app_firm_id() AND app_scope() = 'firm')
+  WITH CHECK (firm_id = app_firm_id() AND app_scope() = 'firm');
+--> statement-breakpoint
+ALTER TABLE will_gift ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY will_gift_firm ON will_gift FOR ALL TO waymark_app
+  USING (firm_id = app_firm_id() AND app_scope() = 'firm')
+  WITH CHECK (firm_id = app_firm_id() AND app_scope() = 'firm');
+--> statement-breakpoint
+ALTER TABLE ledger_entry ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY ledger_entry_firm ON ledger_entry FOR ALL TO waymark_app
+  USING (firm_id = app_firm_id() AND app_scope() = 'firm')
+  WITH CHECK (firm_id = app_firm_id() AND app_scope() = 'firm');
+--> statement-breakpoint
+ALTER TABLE extraction ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY extraction_firm ON extraction FOR ALL TO waymark_app
+  USING (firm_id = app_firm_id() AND app_scope() = 'firm')
+  WITH CHECK (firm_id = app_firm_id() AND app_scope() = 'firm');
+--> statement-breakpoint
+ALTER TABLE draft ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY draft_firm ON draft FOR ALL TO waymark_app
+  USING (firm_id = app_firm_id() AND app_scope() = 'firm')
+  WITH CHECK (firm_id = app_firm_id() AND app_scope() = 'firm');
+--> statement-breakpoint
+ALTER TABLE missing_item ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY missing_item_firm ON missing_item FOR ALL TO waymark_app
+  USING (firm_id = app_firm_id() AND app_scope() = 'firm')
+  WITH CHECK (firm_id = app_firm_id() AND app_scope() = 'firm');
+--> statement-breakpoint
+ALTER TABLE note ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY note_firm ON note FOR ALL TO waymark_app
+  USING (firm_id = app_firm_id() AND app_scope() = 'firm')
+  WITH CHECK (firm_id = app_firm_id() AND app_scope() = 'firm');
+--> statement-breakpoint
+ALTER TABLE milestone ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY milestone_read ON milestone FOR SELECT TO waymark_app USING (app_can_see(firm_id, estate_id));
+--> statement-breakpoint
+CREATE POLICY milestone_insert ON milestone FOR INSERT TO waymark_app WITH CHECK (firm_id = app_firm_id() AND app_scope() = 'firm');
+--> statement-breakpoint
+CREATE POLICY milestone_update ON milestone FOR UPDATE TO waymark_app
+  USING (firm_id = app_firm_id() AND app_scope() = 'firm') WITH CHECK (firm_id = app_firm_id());
+--> statement-breakpoint
+ALTER TABLE client_update ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY client_update_read ON client_update FOR SELECT TO waymark_app USING (app_can_see(firm_id, estate_id));
+--> statement-breakpoint
+CREATE POLICY client_update_insert ON client_update FOR INSERT TO waymark_app WITH CHECK (firm_id = app_firm_id() AND app_scope() = 'firm');
+--> statement-breakpoint
+CREATE POLICY client_update_update ON client_update FOR UPDATE TO waymark_app
+  USING (firm_id = app_firm_id() AND app_scope() = 'firm') WITH CHECK (firm_id = app_firm_id());
+--> statement-breakpoint
+ALTER TABLE estate_staff ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY estate_staff_read ON estate_staff FOR SELECT TO waymark_app USING (app_can_see(firm_id, estate_id));
+--> statement-breakpoint
+CREATE POLICY estate_staff_insert ON estate_staff FOR INSERT TO waymark_app WITH CHECK (firm_id = app_firm_id() AND app_scope() = 'firm');
+--> statement-breakpoint
+CREATE POLICY estate_staff_update ON estate_staff FOR UPDATE TO waymark_app
+  USING (firm_id = app_firm_id() AND app_scope() = 'firm') WITH CHECK (firm_id = app_firm_id());
+--> statement-breakpoint
+-- Tasks: staff see all; families see and complete their own. Family actions
+-- may also create firm tasks ("check the document I uploaded").
+--> statement-breakpoint
+ALTER TABLE task ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY task_read ON task FOR SELECT TO waymark_app
+  USING (app_can_see(firm_id, estate_id) AND (app_scope() = 'firm' OR owner_kind = 'family'));
+--> statement-breakpoint
+CREATE POLICY task_insert ON task FOR INSERT TO waymark_app
+  WITH CHECK (app_can_see(firm_id, estate_id) AND (app_scope() = 'firm' OR owner_kind IN ('family', 'firm')));
+--> statement-breakpoint
+CREATE POLICY task_update ON task FOR UPDATE TO waymark_app
+  USING (app_can_see(firm_id, estate_id) AND (app_scope() = 'firm' OR owner_kind = 'family'))
+  WITH CHECK (app_can_see(firm_id, estate_id) AND (app_scope() = 'firm' OR owner_kind = 'family'));

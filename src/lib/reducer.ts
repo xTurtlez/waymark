@@ -1,36 +1,34 @@
-import type { Asset, AssetKind, DemoState, Draft, Estate, MissingItem, StageIndex, TaskOwner } from "./types";
+import type { Asset, AssetKind, DemoState, Draft, Estate, ISODate, MissingItem, TaskOwner } from "./types";
+import { deriveState } from "./derive";
 import { freshSeed } from "./seed";
-import { stampNow, timeNow, uid } from "./format";
+import { addDays, fullDay, isoDay, nowIso, uid } from "./format";
 import { clientParty, feeEarner, firstName } from "./selectors";
 
 /**
- * The v1 state machine for both sides of the product. Pure: the demo build
- * runs it in the browser; the live build runs it on the server inside an
- * RLS-scoped transaction and persists the result (see src/server/actions.ts).
+ * The state machine for both sides of the product. The demo build runs it in
+ * the browser; the live build runs it on the server inside an RLS-scoped
+ * transaction and saves the changed rows (src/server/estate-store.ts).
+ * Timestamps come from the clock at the moment the action runs, and derived
+ * fields (stage, waiting-on, attention) are recomputed after every action.
  */
 
 export type Action =
   | { type: "hydrate"; state: DemoState }
   | { type: "reset" }
   | { type: "toggleTask"; estateId: string; taskId: string }
-  | { type: "addTask"; estateId: string; title: string; owner: TaskOwner; due: string }
+  | { type: "addTask"; estateId: string; title: string; owner: TaskOwner; dueOn: ISODate | null }
   | { type: "editDraft"; estateId: string; draftId: string; body: string[] }
   | { type: "approveDraft"; estateId: string; draftId: string }
   | { type: "discardDraft"; estateId: string; draftId: string }
   | { type: "resolveMissing"; estateId: string; missingId: string }
   | { type: "acceptExtraction"; estateId: string; extractionId: string }
   | { type: "markDocChecked"; estateId: string; docId: string }
-  | { type: "uploadDocument"; estateId: string; docId?: string; name: string; fileName: string }
+  | { type: "uploadDocument"; estateId: string; docId?: string; name: string; fileName: string; fileId?: string }
   | { type: "addAsset"; estateId: string; by: "firm" | "family"; kind: AssetKind; name: string; institution: string; valuePence: number | null; liability: boolean }
   | { type: "sendMessage"; estateId: string; from: "client" | "firm"; text: string; attachment?: string }
   | { type: "addNote"; estateId: string; text: string }
   | { type: "createEstate"; id: string; deceasedName: string; clientName: string; clientEmail: string; feeEarnerId: string }
   | { type: "completeOnboarding"; deceasedName: string; relationship: string };
-
-function today() {
-  const d = new Date();
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
-}
 
 function withEstate(state: DemoState, id: string, fn: (e: Estate, s: DemoState) => void): DemoState {
   const next = structuredClone(state);
@@ -40,20 +38,24 @@ function withEstate(state: DemoState, id: string, fn: (e: Estate, s: DemoState) 
 }
 
 function audit(e: Estate, actorId: string, text: string) {
-  e.audit.unshift({ id: uid("au"), at: stampNow(), actor: actorId, text });
+  e.audit.unshift({ id: uid("au"), at: nowIso(), actor: actorId, text });
 }
 
 function postUpdate(e: Estate, title: string, body: string, tone: "teal" | "coral" | "amber" | "plum" = "coral") {
-  e.updates.unshift({ id: uid("u"), when: "Today", title, body, tone });
+  e.updates.unshift({ id: uid("u"), at: nowIso(), title, body, tone });
 }
 
-const ASSET_STATUS: Record<"firm" | "family", { firm: string; client: string }> = {
-  firm: { firm: "Confirmed", client: "Confirmed" },
-  family: { firm: "Added by family", client: "Priya will confirm" },
-};
+function completeTask(e: Estate, taskId: string | undefined) {
+  const t = taskId ? e.tasks.find((x) => x.id === taskId) : undefined;
+  if (t && !t.done) {
+    t.done = true;
+    t.doneAt = nowIso();
+  }
+}
 
 function avivaDraft(e: Estate, s: DemoState): Draft {
   const sol = feeEarner(s, e);
+  const dod = e.deceased.dateOfDeath ? `, who died on [[${fullDay(e.deceased.dateOfDeath)}]]` : "";
   return {
     id: uid("dr"),
     kind: "letter",
@@ -62,14 +64,14 @@ function avivaDraft(e: Estate, s: DemoState): Draft {
     re: `${e.deceased.fullName}, pension`,
     body: [
       "Dear Sir or Madam,",
-      `We act for the executor of the late ${e.deceased.fullName}, who died on [[14 May 2026]]. Her Barclays statements show a monthly pension credit from Aviva.`,
+      `We act for the executor of the late ${e.deceased.fullName}${dod}. Her Barclays statements show a monthly pension credit from Aviva.`,
       "Please could you confirm the policy details, any lump sum or death benefit payable, and any overpayment since the date of death. A certified copy of the death certificate is enclosed.",
     ],
     signOff: `Yours faithfully,\n${s.firm.name}`,
     sources: "Barclays statement (monthly credit) · death certificate. Highlighted date pulled from certificate.",
     status: "review",
-    createdAt: stampNow(),
-    taskId: e.tasks.find((t) => /aviva/i.test(t.title) && t.owner.kind === "firm")?.id,
+    createdAt: nowIso(),
+    taskId: e.tasks.find((t) => /aviva/i.test(t.title) && t.owner.kind === "firm" && !t.done)?.id,
     clientUpdate: {
       title: `We've told Aviva about ${e.deceased.firstName}'s pension`,
       body: `${firstName(sol.name)} has asked for the policy details. Pension companies usually reply in 3 to 4 weeks.`,
@@ -77,7 +79,7 @@ function avivaDraft(e: Estate, s: DemoState): Draft {
   };
 }
 
-export function reducer(state: DemoState, a: Action): DemoState {
+function core(state: DemoState, a: Action): DemoState {
   switch (a.type) {
     case "hydrate":
       return a.state;
@@ -89,20 +91,20 @@ export function reducer(state: DemoState, a: Action): DemoState {
         const t = e.tasks.find((x) => x.id === a.taskId);
         if (!t) return;
         t.done = !t.done;
-        t.doneOn = t.done ? "Today" : undefined;
+        t.doneAt = t.done ? nowIso() : undefined;
         audit(e, s.currentStaffId, `${firstName(s.staff.find((m) => m.id === s.currentStaffId)?.name ?? "")} ${t.done ? "completed" : "reopened"} “${t.title}”`);
       });
 
     case "addTask":
       return withEstate(state, a.estateId, (e, s) => {
-        e.tasks.unshift({ id: uid("t"), title: a.title, owner: a.owner, due: a.due, done: false });
+        e.tasks.unshift({ id: uid("t"), title: a.title, owner: a.owner, dueOn: a.dueOn, done: false, createdAt: nowIso() });
         audit(e, s.currentStaffId, `Task added: ${a.title}`);
       });
 
     case "editDraft":
       return withEstate(state, a.estateId, (e) => {
         const d = e.drafts.find((x) => x.id === a.draftId);
-        if (d) {
+        if (d && d.status === "review") {
           d.body = a.body;
           d.edited = true;
         }
@@ -113,23 +115,19 @@ export function reducer(state: DemoState, a: Action): DemoState {
         const d = e.drafts.find((x) => x.id === a.draftId);
         if (!d || d.status !== "review") return;
         d.status = "sent";
+        d.decidedAt = nowIso();
         const me = s.staff.find((m) => m.id === s.currentStaffId);
         audit(e, s.currentStaffId, `${firstName(me?.name ?? "")} approved and sent ${d.title.toLowerCase()} (AI draft${d.edited ? ", edited before sending" : ""})`);
-        if (d.taskId) {
-          const t = e.tasks.find((x) => x.id === d.taskId);
-          if (t && !t.done) {
-            t.done = true;
-            t.doneOn = "Today";
-          }
-        }
+        completeTask(e, d.taskId);
         if (d.clientUpdate) postUpdate(e, d.clientUpdate.title, d.clientUpdate.body);
       });
 
     case "discardDraft":
       return withEstate(state, a.estateId, (e, s) => {
         const d = e.drafts.find((x) => x.id === a.draftId);
-        if (!d) return;
+        if (!d || d.status !== "review") return;
         d.status = "discarded";
+        d.decidedAt = nowIso();
         audit(e, s.currentStaffId, `Discarded AI draft: ${d.title}`);
       });
 
@@ -148,13 +146,11 @@ export function reducer(state: DemoState, a: Action): DemoState {
             break;
           }
           case "remind-family": {
-            const day = new Date().toLocaleDateString("en-GB", { weekday: "long" });
             e.messages.push({
               id: uid("msg"),
               from: "firm",
               authorId: sol.id,
-              day,
-              at: timeNow(),
+              sentAt: nowIso(),
               text: `Hi ${firstName(client.name)}, when you have a moment, could you add the funeral invoice? A photo is fine. I'll ask the bank to pay it directly.`,
             });
             audit(e, s.currentStaffId, `Reminder sent to ${client.name}: ${m.title.toLowerCase()}`);
@@ -163,10 +159,9 @@ export function reducer(state: DemoState, a: Action): DemoState {
           case "request":
             audit(e, s.currentStaffId, `Requested title register from HM Land Registry (${m.title})`);
             break;
-          case "id-check": {
+          case "id-check":
             audit(e, s.currentStaffId, `ID check request sent to ${m.title.replace(" ID", "")}`);
             break;
-          }
         }
       });
 
@@ -183,16 +178,11 @@ export function reducer(state: DemoState, a: Action): DemoState {
             if (!Number.isNaN(n)) asset.valuePence = Math.round(n * 100);
           }
           asset.state = "confirmed";
-          asset.firmStatus = "Confirmed";
-          asset.clientStatus = "Confirmed";
         }
         const doc = e.documents.find((d) => d.id === x.documentId);
         if (doc) doc.state = "accepted";
-        const t = e.tasks.find((y) => /check/i.test(y.title) && doc && y.title.includes(doc.name));
-        if (t) {
-          t.done = true;
-          t.doneOn = "Today";
-        }
+        const t = e.tasks.find((y) => !y.done && /check/i.test(y.title) && doc && y.title.includes(doc.name));
+        completeTask(e, t?.id);
         const client = clientParty(e);
         audit(e, s.currentStaffId, `Reviewed extracted fields from ${x.fileName} and updated assets`);
         postUpdate(e, `Your ${doc?.name ?? "document"} has been checked`, `Thank you, ${firstName(client.name)}. Nothing more needed from you on this one.`, "amber");
@@ -206,7 +196,7 @@ export function reducer(state: DemoState, a: Action): DemoState {
         const client = clientParty(e);
         const me = s.staff.find((m) => m.id === s.currentStaffId);
         audit(e, s.currentStaffId, `${firstName(me?.name ?? "")} marked ${doc.name} as checked`);
-        for (const t of e.tasks) if (!t.done && t.title.includes(doc.name) && t.owner.kind === "firm") t.done = true;
+        for (const t of e.tasks) if (!t.done && t.title.includes(doc.name) && t.owner.kind === "firm") completeTask(e, t.id);
         postUpdate(e, `Your ${doc.name} has been checked`, `Thank you, ${firstName(client.name)}. Nothing more needed from you on this one.`, "amber");
       });
 
@@ -220,22 +210,20 @@ export function reducer(state: DemoState, a: Action): DemoState {
         }
         doc.state = "checking";
         doc.fileName = a.fileName;
+        doc.fileId = a.fileId;
         doc.uploadedBy = client.id;
-        doc.uploadedAt = `Today ${timeNow()}`;
+        doc.uploadedAt = nowIso();
         for (const t of e.tasks) {
           if (!t.done && t.owner.kind === "family" && (t.title.toLowerCase().includes(doc.name.toLowerCase()) || doc.name.toLowerCase().includes(t.title.toLowerCase().replace(/^find /, "")))) {
-            t.done = true;
-            t.doneOn = "Today";
+            completeTask(e, t.id);
           }
         }
-        e.tasks.unshift({ id: uid("t"), title: `Check ${doc.name} from ${firstName(client.name)}`, owner: { kind: "firm", staffId: e.feeEarnerId }, due: "Today", done: false });
+        e.tasks.unshift({ id: uid("t"), title: `Check ${doc.name} from ${firstName(client.name)}`, owner: { kind: "firm", staffId: e.feeEarnerId }, dueOn: isoDay(), done: false, createdAt: nowIso() });
         audit(e, client.id, `${firstName(client.name)} uploaded ${a.fileName}`);
       });
 
     case "addAsset":
       return withEstate(state, a.estateId, (e, s) => {
-        const st = ASSET_STATUS[a.by];
-        const sol = firstName(feeEarner(s, e).name);
         const asset: Asset = {
           id: uid("a"),
           kind: a.kind,
@@ -243,8 +231,6 @@ export function reducer(state: DemoState, a: Action): DemoState {
           clientName: a.name,
           institution: a.institution,
           state: a.by === "firm" ? "confirmed" : "estimate",
-          firmStatus: st.firm,
-          clientStatus: a.by === "family" ? `${sol} will confirm` : st.client,
           valuePence: a.valuePence,
           liability: a.liability,
           addedBy: a.by,
@@ -253,20 +239,26 @@ export function reducer(state: DemoState, a: Action): DemoState {
         const who = a.by === "family" ? clientParty(e) : undefined;
         audit(e, who?.id ?? s.currentStaffId, `${who ? firstName(who.name) : "Firm"} added ${a.liability ? "liability" : "asset"}: ${a.name}${a.institution ? ` (${a.institution})` : ""}`);
         if (a.by === "family" && (a.kind === "bank" || a.kind === "savings")) {
-          e.tasks.unshift({ id: uid("t"), title: `Write to ${a.institution || a.name} for date-of-death balance`, owner: { kind: "firm", staffId: e.feeEarnerId }, due: "This week", done: false });
+          e.tasks.unshift({
+            id: uid("t"),
+            title: `Write to ${a.institution || a.name} for date-of-death balance`,
+            owner: { kind: "firm", staffId: e.feeEarnerId },
+            dueOn: addDays(isoDay(), 7),
+            done: false,
+            createdAt: nowIso(),
+          });
         }
       });
 
     case "sendMessage":
       return withEstate(state, a.estateId, (e, s) => {
-        const day = new Date().toLocaleDateString("en-GB", { weekday: "long" });
         const authorId = a.from === "client" ? e.clientPartyId : s.currentStaffId;
-        e.messages.push({ id: uid("msg"), from: a.from, authorId, day, at: timeNow(), text: a.text, attachment: a.attachment });
+        e.messages.push({ id: uid("msg"), from: a.from, authorId, sentAt: nowIso(), text: a.text, attachment: a.attachment });
       });
 
     case "addNote":
       return withEstate(state, a.estateId, (e, s) => {
-        e.notes.unshift({ id: uid("n"), text: a.text, author: s.currentStaffId, at: today() });
+        e.notes.unshift({ id: uid("n"), text: a.text, author: s.currentStaffId, at: nowIso() });
       });
 
     case "createEstate": {
@@ -274,24 +266,23 @@ export function reducer(state: DemoState, a: Action): DemoState {
       const [first] = a.deceasedName.trim().split(/\s+/);
       const parts = a.clientName.trim().split(/\s+/);
       const clientId = `p_${a.id}_client`;
-      const est: Estate = {
+      const now = nowIso();
+      const est = {
         id: a.id,
         ref: `HRT-${String(431 + next.estates.length).padStart(4, "0")}`,
-        deceased: { firstName: first, fullName: a.deceasedName.trim(), shortName: a.deceasedName.trim(), dateOfDeath: "" },
-        stage: 0 as StageIndex,
-        daysOpen: 0,
+        deceased: { firstName: first, fullName: a.deceasedName.trim(), shortName: a.deceasedName.trim(), dateOfDeath: null },
+        serviceLevel: "full_admin",
+        openedAt: now,
+        milestones: {},
         feeEarnerId: a.feeEarnerId,
         clientPartyId: clientId,
-        waitingOn: "family",
-        blocker: `Onboarding · invitation sent to ${parts[0]}`,
-        attention: false,
         funeralEstimatePence: 0,
         parties: [
           { id: clientId, name: a.clientName.trim(), initials: ((parts[0]?.[0] ?? "") + (parts.at(-1)?.[0] ?? "")).toUpperCase(), role: "executor", email: a.clientEmail, color: "#E3A13A", portalStatus: "invited" },
         ],
         tasks: [
-          { id: uid("t"), title: "Welcome call with the executor", owner: { kind: "firm", staffId: a.feeEarnerId }, due: "This week", done: false },
-          { id: uid("t"), title: "Accept portal invitation", owner: { kind: "family", partyId: clientId }, due: "This week", done: false },
+          { id: uid("t"), title: "Welcome call with the executor", owner: { kind: "firm", staffId: a.feeEarnerId }, dueOn: addDays(isoDay(), 5), done: false, createdAt: now },
+          { id: uid("t"), title: "Accept portal invitation", owner: { kind: "family", partyId: clientId }, dueOn: addDays(isoDay(), 7), done: false, createdAt: now },
         ],
         assets: [],
         documents: [
@@ -305,7 +296,7 @@ export function reducer(state: DemoState, a: Action): DemoState {
         missing: [],
         messages: [],
         updates: [],
-      };
+      } as unknown as Estate;
       audit(est, next.currentStaffId, `Estate opened. Portal invitation sent to ${a.clientEmail}`);
       next.estates.push(est);
       return next;
@@ -324,3 +315,8 @@ export function reducer(state: DemoState, a: Action): DemoState {
   }
 }
 
+/** Apply an action, then recompute derived fields (stage, waiting-on, attention, days open). */
+export function reducer(state: DemoState, a: Action): DemoState {
+  const next = core(state, a);
+  return next === state ? state : deriveState(next);
+}

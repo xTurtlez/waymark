@@ -9,8 +9,8 @@ import { TONE_CHIP } from "@/lib/stages";
 import { feeEarner, firstName, totals } from "@/lib/selectors";
 import { useClientEstate, useDemo } from "@/lib/store";
 import { money } from "@/lib/format";
+import { assetStatus } from "@/lib/derive";
 
-const CLIENT_TONE = { confirmed: "teal", awaiting: "plum", estimate: "amber", not_notified: "plum" } as const;
 const STATUS_TEXT = { teal: "text-teal", plum: "text-plum", amber: "text-amber-ink", coral: "text-coral-ink", neutral: "text-muted" } as const;
 
 export default function Assets() {
@@ -39,7 +39,7 @@ export default function Assets() {
         {estate.assets.map((a) => {
           const Icon = ASSET_ICON[a.kind];
           const tint = TONE_CHIP[ASSET_TINT[a.kind]];
-          const statusTone = a.liability ? "coral" : CLIENT_TONE[a.state];
+          const st = assetStatus(a, estate, solFirst);
           return (
             <li key={a.id} className="flex flex-col gap-2 rounded-[20px] border border-line bg-paper p-3.5">
               <span className={`grid size-[42px] place-items-center rounded-[14px] text-[22px] ${tint}`}>
@@ -47,7 +47,7 @@ export default function Assets() {
               </span>
               <div className="text-[15px] font-semibold leading-tight">{a.clientName ?? a.name}</div>
               <div className="font-serif text-[19px] font-medium">{a.valuePence === null ? "Not known yet" : a.liability ? `owes ${money(a.valuePence)}` : money(a.valuePence)}</div>
-              <div className={`text-xs font-semibold ${STATUS_TEXT[statusTone]}`}>{a.clientStatus.replace("Priya", solFirst)}</div>
+              <div className={`text-xs font-semibold ${STATUS_TEXT[a.liability ? "coral" : st.tone]}`}>{st.client}</div>
             </li>
           );
         })}

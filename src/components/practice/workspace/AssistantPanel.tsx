@@ -18,6 +18,7 @@ import { estateSummary } from "@/lib/selectors";
 import { firmAnswer } from "@/lib/assistant";
 import { useActions } from "@/lib/store";
 import type { DemoState, Draft, Estate } from "@/lib/types";
+import { uploadedLabel } from "@/lib/format";
 
 export type AiTab = "draft" | "extract" | "missing" | "summary";
 const TABS: { id: AiTab; label: string }[] = [
@@ -177,6 +178,15 @@ function DraftView({ estate, focusId }: { estate: Estate; focusId?: string }) {
   );
 }
 
+/** "Photo from Sarah · yesterday 21:05" from the document's upload record. */
+function provenance(estate: Estate, documentId: string): string {
+  const doc = estate.documents.find((d) => d.id === documentId);
+  if (!doc?.uploadedAt) return "Uploaded document";
+  const who = estate.parties.find((p) => p.id === doc.uploadedBy);
+  const kind = /\.(jpe?g|png|heic|webp)$/i.test(doc.fileName ?? "") ? "Photo" : "File";
+  return `${kind} from ${who ? who.name.split(" ")[0] : "the family"} · ${uploadedLabel(doc.uploadedAt)}`;
+}
+
 function ExtractView({ estate }: { estate: Estate }) {
   const { acceptExtraction } = useActions();
   const x = estate.extractions.find((e) => e.status === "review");
@@ -206,7 +216,7 @@ function ExtractView({ estate }: { estate: Estate }) {
         <div className="scan-warm h-16 w-[52px] flex-none rounded-[8px]" aria-hidden />
         <div>
           <div className="text-sm font-semibold">{x.fileName}</div>
-          <div className="text-[12.5px] text-muted">{x.from}</div>
+          <div className="text-[12.5px] text-muted">{provenance(estate, x.documentId)}</div>
         </div>
       </div>
       <div className="text-xs font-semibold uppercase tracking-[0.05em] text-plum">Extracted fields · check each</div>

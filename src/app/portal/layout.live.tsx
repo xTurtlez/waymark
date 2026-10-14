@@ -4,7 +4,7 @@ import { PortalShell } from "@/components/portal/PortalShell";
 import { StoreProvider } from "@/lib/store";
 import { withTenant } from "@/db/client";
 import { applyAction } from "@/server/actions";
-import { loadState } from "@/server/state";
+import { forClient, loadState } from "@/server/state";
 import { getViewer, tenantOf } from "@/server/viewer";
 
 export const metadata: Metadata = {
@@ -24,7 +24,7 @@ export default async function PortalLayout({ children }: { children: React.React
   if (viewer.kind === "staff") redirect("/practice");
   if (viewer.kind !== "family") redirect("/sign-in?error=no-access");
 
-  const state = await withTenant(tenantOf(viewer), (tx) => loadState(tx, viewer));
+  const state = forClient(await withTenant(tenantOf(viewer), (tx) => loadState(tx, viewer)));
   return (
     <StoreProvider mode="live" initial={state} apply={applyAction}>
       <PortalShell>{children}</PortalShell>
