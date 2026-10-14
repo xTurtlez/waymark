@@ -1,0 +1,63 @@
+{
+  "name": "waymark",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Waymark: probate software for law firms in England & Wales. Practice workspace and firm-branded client portal.",
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "build:demo": "WAYMARK_MODE=demo next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:db": "vitest run --project db",
+    "e2e": "playwright test",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:seed": "tsx --conditions=react-server scripts/seed.ts",
+    "db:reset": "tsx scripts/reset.ts",
+    "db:runtime-role": "tsx scripts/runtime-role.ts",
+    "e2e:db": "bash scripts/e2e-db.sh"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.60.0",
+    "@aws-sdk/client-s3": "^3.700.0",
+    "@aws-sdk/s3-request-presigner": "^3.700.0",
+    "@better-auth/passkey": "^1.7.0",
+    "@fontsource-variable/figtree": "^5.2.0",
+    "@fontsource-variable/newsreader": "^5.2.0",
+    "better-auth": "^1.7.0",
+    "drizzle-orm": "^0.45.2",
+    "next": "^16.0.0",
+    "pdf-lib": "^1.17.1",
+    "postgres": "^3.4.5",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-icons": "^5.5.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.0",
+    "@playwright/test": "1.56.0",
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^22.0.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitest/coverage-v8": "^3.2.0",
+    "drizzle-kit": "^0.31.0",
+    "eslint": "^9.30.0",
+    "eslint-config-next": "^16.0.0",
+    "tailwindcss": "^4.1.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}
