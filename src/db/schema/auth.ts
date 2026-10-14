@@ -1,4 +1,4 @@
-import { boolean, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { bigint, boolean, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 /**
  * Better Auth tables (better-auth 1.7 core + two-factor + passkey plugins).
@@ -107,3 +107,11 @@ export const passkey = pgTable(
   },
   (t) => [index("passkey_user").on(t.userId), index("passkey_credential").on(t.credentialID)],
 );
+
+/** Sign-in rate limiting, shared across server instances (Better Auth "database" storage). */
+export const rateLimit = pgTable("rate_limit", {
+  id: text("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  count: integer("count").notNull(),
+  lastRequest: bigint("last_request", { mode: "number" }).notNull(),
+});

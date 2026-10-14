@@ -25,7 +25,11 @@ export function SignInForm({ initialTab, initialEmail, sso, next, error }: { ini
     const res = await authClient.signIn.email({ email: email.trim(), password });
     setBusy(false);
     if (res.error) {
-      setMsg("That email and password don't match. Check them and try again.");
+      setMsg(
+        res.error.status === 429
+          ? "Too many attempts. Please wait a minute, then try again."
+          : "That email and password don't match. Check them and try again.",
+      );
       return;
     }
     // If two-factor is on, the client plugin has already redirected.

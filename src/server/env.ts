@@ -22,6 +22,8 @@ const schema = z.object({
   MICROSOFT_CLIENT_SECRET: z.string().optional(),
   MICROSOFT_TENANT_ID: z.string().optional(),
   REQUIRE_STAFF_MFA: z.enum(["0", "1"]).default("0"),
+  // Sign-in attempts allowed per address per minute (per endpoint). E2E raises it.
+  AUTH_SIGNIN_LIMIT: z.coerce.number().int().min(1).default(5),
   WAYMARK_DEV_TOOLS: z.enum(["0", "1"]).default("0"),
 });
 

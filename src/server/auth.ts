@@ -35,12 +35,25 @@ function create() {
         verification: schema.verification,
         twoFactor: schema.twoFactor,
         passkey: schema.passkey,
+        rateLimit: schema.rateLimit,
       },
     }),
     emailAndPassword: { enabled: true, disableSignUp: true, minPasswordLength: 12 },
     session: { expiresIn: 60 * 60 * 12, updateAge: 60 * 60 },
     socialProviders: microsoft,
-    rateLimit: { enabled: true, window: 60, max: 60 },
+    // Stored in Postgres so limits hold across serverless instances.
+    rateLimit: {
+      enabled: true,
+      storage: "database",
+      window: 60,
+      max: 100,
+      customRules: {
+        "/sign-in/email": { window: 60, max: e.AUTH_SIGNIN_LIMIT },
+        "/sign-in/magic-link": { window: 60, max: e.AUTH_SIGNIN_LIMIT },
+        "/two-factor/verify-totp": { window: 60, max: e.AUTH_SIGNIN_LIMIT },
+        "/two-factor/verify-backup-code": { window: 60, max: e.AUTH_SIGNIN_LIMIT },
+      },
+    },
     advanced: { database: { generateId: () => crypto.randomUUID() } },
     plugins: [
       twoFactor({ issuer: "Waymark" }),
