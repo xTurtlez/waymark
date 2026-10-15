@@ -9,7 +9,7 @@ export default defineConfig({
     projects: [
       {
         extends: true,
-        test: { name: "unit", include: ["tests/unit/**/*.test.ts", "src/**/*.test.ts"], environment: "node" },
+        test: { name: "unit", include: ["tests/unit/**/*.test.ts", "tests/rules/**/*.test.ts", "src/**/*.test.ts"], environment: "node" },
       },
       {
         extends: true,
@@ -21,6 +21,12 @@ export default defineConfig({
         },
       },
     ],
-    coverage: { provider: "v8", include: ["src/lib/**", "src/server/**", "src/rules/**"] },
+    coverage: {
+      provider: "v8",
+      include: ["src/lib/**", "src/server/**", "src/rules/**"],
+      exclude: ["src/rules/types.ts"],
+      // The tax engine must stay fully tested (brief §3: 100% branch coverage).
+      thresholds: { "src/rules/**": { statements: 100, branches: 100, functions: 100, lines: 100 } },
+    },
   },
 });
