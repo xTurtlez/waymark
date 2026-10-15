@@ -65,7 +65,7 @@ async function writeEstate(db: Db, firmId: string, e: Estate, users: { byPartyKe
       feeEarnerId: e.feeEarnerId || null,
       openedAt: new Date(e.openedAt),
     });
-    await saveEstate(tx, { firmId, estateUuid, actorMembershipId: null, actorUserId: "seed" }, null, e);
+    await saveEstate(tx, { firmId, estateUuid, actorMembershipId: null, actorUserId: "seed", scope: "firm" }, null, e);
     // Link family members who have portal accounts.
     for (const [key, userId] of Object.entries(users.byPartyKey)) {
       await tx

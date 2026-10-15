@@ -37,6 +37,16 @@ const SUMMARY: Record<string, string> = {
   addNote: "File note added",
   createEstate: "Estate opened",
   completeOnboarding: "Portal setup completed",
+  updateTaxProfile: "IHT details updated",
+  setPartyTaxCategory: "Beneficiary IHT treatment updated",
+  setAssetTax: "Holding IHT treatment updated",
+  setWillGiftTax: "Will gift linked",
+  addLifetimeGift: "Lifetime gift recorded",
+  voidLifetimeGift: "Lifetime gift withdrawn",
+  addPriorTransfer: "Earlier estate recorded",
+  voidPriorTransfer: "Earlier estate withdrawn",
+  setIntestacyFamily: "Intestacy family recorded",
+  confirmIhtFlag: "IHT point confirmed by a solicitor",
 };
 
 /** Create (or find) the auth user for an invited executor. Privileged: runs outside tenant scope. */
@@ -90,7 +100,7 @@ export async function applyAction(input: unknown): Promise<Result> {
       }
       const before = await loadState(tx, viewer);
       if (family && slug && slug !== before.currentClientEstateId) throw new Error("FORBIDDEN");
-      const saveCtx = (estateUuid: string) => ({ firmId: viewer.firmId, estateUuid, actorMembershipId: family ? null : viewer.membershipId, actorUserId: viewer.userId });
+      const saveCtx = (estateUuid: string) => ({ firmId: viewer.firmId, estateUuid, actorMembershipId: family ? null : viewer.membershipId, actorUserId: viewer.userId, scope: family ? ("portal" as const) : ("firm" as const) });
       const auditBase = { firmId: viewer.firmId, actorType: family ? ("family" as const) : ("staff" as const), actorUserId: viewer.userId, action: action.type, ip, userAgent };
 
       if (action.type === "createEstate") {

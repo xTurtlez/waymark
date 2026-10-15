@@ -67,6 +67,14 @@ export const extractionStatus = pgEnum("extraction_status", ["review", "accepted
 export const messageSide = pgEnum("message_side", ["client", "firm"]);
 export const tone = pgEnum("tone", ["teal", "coral", "amber", "plum", "neutral"]);
 export const idvStatus = pgEnum("idv_status", ["not_started", "pending", "passed", "failed", "referred"]);
+// Milestone 3: inheritance tax inputs.
+export const taxCategory = pgEnum("tax_category", ["spouse", "charity", "lineal_descendant", "other"]);
+export const ownership = pgEnum("ownership", ["sole", "joint_tenancy", "tenancy_in_common"]);
+export const reliefKind = pgEnum("relief_kind", ["business", "agricultural"]);
+export const reliefRate = pgEnum("relief_rate", ["full", "half"]);
+export const pensionTreatment = pgEnum("pension_treatment", ["unused_fund", "death_in_service", "dependants_scheme_pension"]);
+export const giftForm = pgEnum("gift_form", ["outright", "trust"]);
+export const weddingGift = pgEnum("wedding_gift", ["child", "grandchild", "other"]);
 
 export const firm = pgTable("firm", {
   id: id(),
@@ -336,6 +344,10 @@ export const willGift = pgTable(
     /** Share of residue in basis points (10000 = 100%). */
     shareBp: integer("share_bp"),
     substitution: text("substitution"),
+    /** For a specific gift: the holding it gives. */
+    holdingId: uuid("holding_id"),
+    /** The gift bears its own IHT (otherwise it passes free of tax, from residue). */
+    bearsOwnTax: boolean("bears_own_tax").notNull().default(false),
     position: integer("position").notNull().default(0),
   },
   (t) => [uniqueIndex("will_gift_key").on(t.estateId, t.key)],
@@ -548,4 +560,116 @@ export const note = pgTable(
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("note_key").on(t.estateId, t.key)],
+);
+
+// ── Milestone 3: inheritance tax ────────────────────────────────────────────
+// Firm-only (RLS: firm scope). Records are never deleted; withdrawn entries
+// are marked `voided_at`.
+
+/** One per estate: the IHT facts that aren't attached to a holding or party. */
+export const ihtProfile = pgTable(
+  "iht_profile",
+  {
+    ...tenantCols(),
+    /** Long-term UK resident (deaths from 6 April 2025) or UK-domiciled. */
+    longTermUkResident: boolean("long_term_uk_resident").notNull().default(true),
+    spouseExemptionLimited: boolean("spouse_exemption_limited").notNull().default(false),
+    transferredNrbBp: integer("transferred_nrb_bp").notNull().default(0),
+    transferredRnrbBp: integer("transferred_rnrb_bp").notNull().default(0),
+    predeceasedSpouseName: text("predeceased_spouse_name"),
+    predeceasedSpouseDiedOn: date("predeceased_spouse_died_on"),
+    downsizingDisposedOn: date("downsizing_disposed_on"),
+    downsizingFormerValuePence: bigint("downsizing_former_value_pence", { mode: "number" }),
+    reliefAllowanceTransferredPence: bigint("relief_allowance_transferred_pence", { mode: "number" }),
+    residueBenham: boolean("residue_benham").notNull().default(false),
+    mergeCharityComponents: boolean("merge_charity_components").notNull().default(false),
+    /** Family tree for the intestacy rules (validated in the app). */
+    intestacyFamily: jsonb("intestacy_family"),
+    /** Solicitor confirmations of engine flags: { [code]: { by, at } }. */
+    confirmations: jsonb("confirmations").notNull().default({}),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("iht_profile_estate").on(t.estateId)],
+);
+
+export const lifetimeGift = pgTable(
+  "lifetime_gift",
+  {
+    ...keyed(),
+    madeOn: date("made_on").notNull(),
+    valuePence: bigint("value_pence", { mode: "number" }).notNull(),
+    description: text("description").notNull(),
+    recipientPartyId: uuid("recipient_party_id").references(() => estateParty.id, { onDelete: "set null" }),
+    recipientName: text("recipient_name"),
+    recipientCategory: taxCategory("recipient_category").notNull(),
+    form: giftForm("form").notNull().default("outright"),
+    lifetimeTaxPaidPence: bigint("lifetime_tax_paid_pence", { mode: "number" }),
+    smallGift: boolean("small_gift").notNull().default(false),
+    weddingGift: weddingGift("wedding_gift"),
+    normalExpenditure: boolean("normal_expenditure").notNull().default(false),
+    reliefKind: reliefKind("relief_kind"),
+    reliefRate: reliefRate("relief_rate"),
+    reliefStillQualifies: boolean("relief_still_qualifies").notNull().default(true),
+    createdAt: createdAt(),
+    voidedAt: ts("voided_at"),
+  },
+  (t) => [uniqueIndex("lifetime_gift_key").on(t.estateId, t.key), index("lifetime_gift_estate").on(t.estateId, t.madeOn)],
+);
+
+/** How a holding is treated for IHT. Separate from `holding`, which families can read. */
+export const holdingTax = pgTable(
+  "holding_tax",
+  {
+    ...tenantCols(),
+    holdingId: uuid("holding_id")
+      .notNull()
+      .references(() => holding.id, { onDelete: "cascade" }),
+    ownership: ownership("ownership").notNull().default("sole"),
+    /** Joint tenancy: who takes the deceased's share by survivorship. */
+    survivorPartyId: uuid("survivor_party_id").references(() => estateParty.id, { onDelete: "set null" }),
+    /** The home nominated for the residence nil-rate band. */
+    qualifyingResidence: boolean("qualifying_residence").notNull().default(false),
+    reliefKind: reliefKind("relief_kind"),
+    reliefRate: reliefRate("relief_rate"),
+    pensionTreatment: pensionTreatment("pension_treatment"),
+    pensionRecipientPartyId: uuid("pension_recipient_party_id").references(() => estateParty.id, { onDelete: "set null" }),
+    foreign: boolean("foreign").notNull().default(false),
+    /** For a liability: the holding it is secured on (e.g. a mortgage). */
+    securedOnHoldingId: uuid("secured_on_holding_id").references(() => holding.id, { onDelete: "set null" }),
+    /** False for a debt that can't be deducted for IHT. */
+    deductible: boolean("deductible").notNull().default(true),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("holding_tax_holding").on(t.holdingId)],
+);
+
+/** How a gift to a party is treated for IHT, when set by a solicitor (otherwise worked out from the relationship). */
+export const partyTax = pgTable(
+  "party_tax",
+  {
+    ...tenantCols(),
+    partyId: uuid("party_id")
+      .notNull()
+      .references(() => estateParty.id, { onDelete: "cascade" }),
+    /** Null: worked out from the relationship again. */
+    category: taxCategory("category"),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("party_tax_party").on(t.partyId)],
+);
+
+/** An earlier estate this one inherited from, for quick succession relief. */
+export const priorTransfer = pgTable(
+  "prior_transfer",
+  {
+    ...keyed(),
+    label: text("label").notNull(),
+    transferOn: date("transfer_on").notNull(),
+    netIncreasePence: bigint("net_increase_pence", { mode: "number" }).notNull(),
+    grossTransferPence: bigint("gross_transfer_pence", { mode: "number" }).notNull(),
+    taxPaidPence: bigint("tax_paid_pence", { mode: "number" }).notNull(),
+    createdAt: createdAt(),
+    voidedAt: ts("voided_at"),
+  },
+  (t) => [uniqueIndex("prior_transfer_key").on(t.estateId, t.key)],
 );

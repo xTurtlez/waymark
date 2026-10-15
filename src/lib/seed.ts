@@ -1,6 +1,22 @@
 import { deriveState } from "./derive";
 import { addDays, fullDay, isoDay } from "./format";
-import type { DemoState, Estate, Party, StageIndex, Task, ThirdPartyCategory } from "./types";
+import type { DemoState, Estate, Party, StageIndex, Task, TaxProfile, ThirdPartyCategory } from "./types";
+
+/** An empty tax profile with some fields filled in. */
+function taxProfile(p: Partial<TaxProfile> = {}): TaxProfile {
+  return {
+    longTermUkResident: true,
+    spouseExemptionLimited: false,
+    transferredNrbBp: 0,
+    transferredRnrbBp: 0,
+    residueBenham: false,
+    mergeCharityComponents: false,
+    confirmations: {},
+    gifts: [],
+    priorTransfers: [],
+    ...p,
+  };
+}
 
 /**
  * Demo data. Sample estate from the design handoff: Margaret Ellis; her
@@ -11,7 +27,7 @@ import type { DemoState, Estate, Party, StageIndex, Task, ThirdPartyCategory } f
  * five days, and Sarah's statement always arrived yesterday evening.
  */
 
-export const SEED_VERSION = 4;
+export const SEED_VERSION = 5;
 
 type Raw = Omit<Estate, "stage" | "daysOpen" | "waitingOn" | "blocker" | "attention">;
 
@@ -54,7 +70,7 @@ function ellis(now: Date): Raw {
       location: "Firm safe",
       codicils: 0,
       gifts: [
-        { id: "g1", kind: "specific", beneficiaryPartyId: "p_sarah", description: "12 Elm Road, Bath" },
+        { id: "g1", kind: "specific", beneficiaryPartyId: "p_sarah", description: "12 Elm Road, Bath", assetId: "a_house" },
         { id: "g2", kind: "residuary", beneficiaryPartyId: "p_sarah", description: "Residue, half", shareBp: 5000 },
         { id: "g3", kind: "residuary", beneficiaryPartyId: "p_tom", description: "Residue, half", shareBp: 5000, substitution: "to his children if he dies first" },
       ],
@@ -77,11 +93,11 @@ function ellis(now: Date): Raw {
       { id: "t_valuation", title: "Instruct estate agent valuation", owner: { kind: "firm", staffId: "s_jt" }, dueOn: c.day(-4), done: true, doneAt: c.at(-4, "11:15"), createdAt: c.at(-12) },
     ],
     assets: [
-      { id: "a_house", kind: "property", name: "12 Elm Road, Bath", institution: "Freehold", state: "estimate", valuePence: 36_500_000, liability: false, addedBy: "firm", nextAction: "valuation", nextActionOn: c.day(5) },
+      { id: "a_house", kind: "property", name: "12 Elm Road, Bath", institution: "Freehold", state: "estimate", valuePence: 36_500_000, liability: false, addedBy: "firm", nextAction: "valuation", nextActionOn: c.day(5), tax: { qualifyingResidence: true } },
       { id: "a_barclays", kind: "bank", name: "Current account", clientName: "Barclays current account", institution: "Barclays", reference: "ending 2291", state: "awaiting", valuePence: 824_000, liability: false, addedBy: "family" },
       { id: "a_nationwide", kind: "savings", name: "Savings", clientName: "Nationwide savings", institution: "Nationwide", reference: "ending 4417", state: "estimate", valuePence: 2_156_000, liability: false, addedBy: "family" },
       { id: "a_bonds", kind: "bonds", name: "Premium Bonds", institution: "NS&I", state: "confirmed", valuePence: 1_750_000, liability: false, addedBy: "firm" },
-      { id: "a_pension", kind: "pension", name: "Pension", clientName: "Aviva pension", institution: "Aviva", state: "not_notified", valuePence: null, liability: false, addedBy: "firm" },
+      { id: "a_pension", kind: "pension", name: "Pension", clientName: "Aviva pension", institution: "Aviva", state: "not_notified", valuePence: null, liability: false, addedBy: "firm", tax: { pension: "unused_fund" } },
       { id: "a_card", kind: "credit", name: "Credit card", clientName: "Barclaycard", institution: "Barclaycard", state: "confirmed", valuePence: 363_600, liability: true, addedBy: "family" },
       { id: "a_energy", kind: "utility", name: "Final energy bill", clientName: "British Gas final bill", institution: "British Gas", state: "confirmed", valuePence: 21_400, liability: true, addedBy: "family" },
     ],
@@ -155,6 +171,8 @@ function ellis(now: Date): Raw {
       { id: "u3", at: c.at(-8, "09:40"), title: "A notice has been placed in The Gazette", body: "This gives anyone Margaret owed money a chance to come forward. It's a normal step, and it protects you as executor.", tone: "amber" },
       { id: "u4", at: c.at(-84, "15:00"), title: "Stage 2 complete: documents gathered", body: "A big step. Everything Priya needed to begin valuing the estate.", tone: "teal", milestone: true },
     ],
+    // Margaret's husband Robert died in 2015 leaving everything to her, so both his allowances transfer.
+    tax: taxProfile({ transferredNrbBp: 10_000, transferredRnrbBp: 10_000, predeceasedSpouse: { name: "Robert Ellis", diedOn: "2015-08-03" } }),
     todayStep: {
       title: "Let's list what Margaret owned",
       stepTitle: "Let's list Margaret's bank accounts",
@@ -239,6 +257,7 @@ function lite(
     missing: [],
     messages: [],
     updates: [],
+    tax: taxProfile(),
   };
 }
 
@@ -294,6 +313,67 @@ export function buildSeed(now: Date = new Date()): DemoState {
     clientUpdate: { title: "We've replied to HMRC", body: "We've answered HMRC's question about the shares. They usually respond within a few weeks." },
   });
 
+  // Asante: the half share of the home passes to Ama by survivorship; the will leaves her everything.
+  asante.deceased.maritalStatus = "married";
+  asante.assets = [
+    { id: "as_house", kind: "property", name: "7 Larch Way, Frome (half share)", institution: "Joint with Ama", state: "estimate", valuePence: 21_000_000, liability: false, addedBy: "firm", tax: { ownership: "joint_tenancy", survivorPartyId: "p_asante_client", qualifyingResidence: true } },
+    { id: "as_savings", kind: "savings", name: "Savings", clientName: "Coventry BS savings", institution: "Coventry Building Society", state: "confirmed", valuePence: 6_000_000, liability: false, addedBy: "family" },
+    { id: "as_pension", kind: "pension", name: "Pension", clientName: "Aviva pension", institution: "Aviva", state: "awaiting", valuePence: 18_000_000, liability: false, addedBy: "firm", tax: { pension: "unused_fund", pensionRecipientPartyId: "p_asante_client" } },
+  ];
+  asante.will = { dated: "2012-05-20", originalHeld: false, location: "Barclays safe custody", codicils: 0, gifts: [{ id: "ag1", kind: "residuary", beneficiaryPartyId: "p_asante_client", description: "Everything to Ama", shareBp: 10_000 }] };
+
+  // Mehta: a taxable estate. Widower (Asha's allowances transfer), a gift to Ravi within 7 years, and a charity legacy.
+  const mehtaDod = mehta.deceased.dateOfDeath!;
+  mehta.deceased.maritalStatus = "widowed";
+  mehta.parties.push({ id: "p_mehta_hospice", name: "St Peter's Hospice", initials: "SP", role: "beneficiary", color: "#5B2E57", taxCategory: "charity" });
+  mehta.funeralEstimatePence = 600_000;
+  mehta.assets = [
+    { id: "m_house", kind: "property", name: "14 Orchard Close, Bath", institution: "Freehold", state: "confirmed", valuePence: 65_000_000, liability: false, addedBy: "firm", tax: { qualifyingResidence: true } },
+    { id: "m_shares", kind: "investment", name: "Share portfolio", institution: "Hargreaves Lansdown", state: "confirmed", valuePence: 90_000_000, liability: false, addedBy: "firm" },
+    { id: "m_cash", kind: "bank", name: "Current account", institution: "Lloyds", state: "confirmed", valuePence: 15_000_000, liability: false, addedBy: "firm" },
+  ];
+  mehta.will = {
+    dated: "2018-11-02",
+    originalHeld: true,
+    location: "Firm safe",
+    codicils: 1,
+    gifts: [
+      { id: "mg1", kind: "specific", beneficiaryPartyId: "p_mehta_client", description: "14 Orchard Close, Bath", assetId: "m_house" },
+      { id: "mg2", kind: "pecuniary", beneficiaryPartyId: "p_mehta_hospice", description: "£25,000 to St Peter's Hospice", amountPence: 2_500_000 },
+      { id: "mg3", kind: "residuary", beneficiaryPartyId: "p_mehta_client", description: "Residue to Ravi", shareBp: 10_000 },
+    ],
+  };
+  mehta.tax = taxProfile({
+    transferredNrbBp: 10_000,
+    transferredRnrbBp: 10_000,
+    predeceasedSpouse: { name: "Asha Mehta", diedOn: "2019-02-11" },
+    gifts: [
+      { id: "lg_mehta_1", madeOn: addDays(mehtaDod, -900), valuePence: 10_000_000, description: "Gift to Ravi towards a house deposit", recipientPartyId: "p_mehta_client", recipientCategory: "lineal_descendant", form: "outright" },
+    ],
+  });
+
+  // Reid: no will found yet, so the intestacy rules apply. Moira and two children survive.
+  const reid = lite(now, { id: "reid", ref: "HRT-0430", name: "Thomas Reid", client: "Moira Reid", stage: 0, days: 8, earner: "s_ps", relationship: "wife",
+    familyItems: [{ title: "Add family details", ageDays: 8 }, { title: "Upload death certificate", ageDays: 8 }, { title: "Tell us where the will is", ageDays: 8 }, { title: "List bank accounts", ageDays: 8 }], firmTasks: ["Welcome call with Moira"] });
+  reid.deceased.maritalStatus = "married";
+  reid.assets = [
+    { id: "r_house", kind: "property", name: "3 Mill Lane, Bradford-on-Avon", institution: "Freehold", state: "estimate", valuePence: 38_000_000, liability: false, addedBy: "firm", tax: { qualifyingResidence: true } },
+    { id: "r_savings", kind: "savings", name: "Savings", clientName: "Halifax savings", institution: "Halifax", state: "estimate", valuePence: 9_500_000, liability: false, addedBy: "family" },
+    { id: "r_goods", kind: "other", name: "Household and personal goods", institution: "", state: "estimate", valuePence: 1_200_000, liability: false, addedBy: "family" },
+  ];
+  reid.tax = taxProfile({
+    intestacyFamily: {
+      spouseName: "Moira Reid",
+      issue: [{ name: "Fiona Reid", alive: true }, { name: "Callum Reid", alive: true }],
+      parents: [],
+      siblingsWhole: [],
+      siblingsHalf: [],
+      grandparents: [],
+      auntsUnclesWhole: [],
+      auntsUnclesHalf: [],
+    },
+  });
+
   const raw: Raw[] = [
     ellis(now),
     asante,
@@ -304,8 +384,7 @@ export function buildSeed(now: Date = new Date()): DemoState {
       third: { label: "Probate Registry", category: "registry", title: "Grant application", ageDays: 42, dueInDays: null }, familyItems: [], firmTasks: ["Check Registry status"] }),
     lite(now, { id: "pike", ref: "HRT-0365", name: "Rosemary Pike", client: "Neil Pike", stage: 4, days: 155, earner: "s_lm", relationship: "son",
       third: { label: "Probate Registry", category: "registry", title: "Grant application", ageDays: 21, dueInDays: null }, familyItems: [{ title: "Sign statement of truth", ageDays: 3 }], firmTasks: [] }),
-    lite(now, { id: "reid", ref: "HRT-0430", name: "Thomas Reid", client: "Moira Reid", stage: 0, days: 8, earner: "s_ps", relationship: "wife",
-      familyItems: [{ title: "Add family details", ageDays: 8 }, { title: "Upload death certificate", ageDays: 8 }, { title: "Tell us where the will is", ageDays: 8 }, { title: "List bank accounts", ageDays: 8 }], firmTasks: ["Welcome call with Moira"] }),
+    reid,
     lite(now, { id: "lowe", ref: "HRT-0341", name: "Brenda Lowe", client: "Paul Lowe", stage: 5, days: 260, earner: "s_jt", relationship: "son",
       third: { label: "Nationwide", category: "bank", title: "Closing accounts", ageDays: 9, dueInDays: 12 }, familyItems: [], firmTasks: ["Confirm Nationwide closure funds"] }),
     lite(now, { id: "morgan", ref: "HRT-0322", name: "Eileen Morgan", client: "Carys Morgan", stage: 6, days: 301, earner: "s_ps", relationship: "daughter",

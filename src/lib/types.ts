@@ -28,6 +28,9 @@ export type ThirdPartyCategory = "bank" | "hmrc" | "registry" | "other";
 
 export type Tone = "teal" | "coral" | "amber" | "plum" | "neutral";
 
+/** How a recipient is treated for inheritance tax (src/rules). */
+export type TaxCategory = "spouse" | "charity" | "lineal_descendant" | "other";
+
 export interface Firm {
   id: string;
   name: string; // "Ellis & Rowe Solicitors"
@@ -80,6 +83,24 @@ export interface Asset {
   /** Next dated step, e.g. a booked valuation. */
   nextActionOn?: ISODate;
   nextAction?: "valuation";
+  /** Inheritance tax treatment (firm-set). */
+  tax?: AssetTax;
+}
+
+export interface AssetTax {
+  ownership?: "sole" | "joint_tenancy" | "tenancy_in_common";
+  /** Joint tenancy: the party who takes the deceased's share by survivorship. */
+  survivorPartyId?: string;
+  /** The home nominated for the residence nil-rate band. */
+  qualifyingResidence?: boolean;
+  relief?: { kind: "business" | "agricultural"; rate: "full" | "half" };
+  pension?: "unused_fund" | "death_in_service" | "dependants_scheme_pension";
+  pensionRecipientPartyId?: string;
+  foreign?: boolean;
+  /** A liability secured on another holding (e.g. a mortgage on the home). */
+  securedOnAssetId?: string;
+  /** False for a debt that can't be deducted. Default true. */
+  deductible?: boolean;
 }
 
 export type DocState = "needed" | "checking" | "accepted" | "held";
@@ -111,6 +132,8 @@ export interface Party {
   color: string;
   portalStatus?: "active" | "invited" | "not_invited";
   staffId?: string;
+  /** IHT treatment of gifts to this person; unset = worked out from the relationship. */
+  taxCategory?: TaxCategory;
 }
 
 export interface AuditEntry {
@@ -201,6 +224,10 @@ export interface WillGift {
   /** Share of residue in basis points (10000 = 100%). */
   shareBp?: number;
   substitution?: string;
+  /** Specific gift: the holding it gives. */
+  assetId?: string;
+  /** The gift bears its own IHT; otherwise it passes free of tax. */
+  bearsOwnTax?: boolean;
 }
 
 export interface Will {
@@ -209,6 +236,68 @@ export interface Will {
   location?: string;
   codicils: number;
   gifts: WillGift[];
+}
+
+export interface LifetimeGiftRecord {
+  id: string;
+  madeOn: ISODate;
+  valuePence: number;
+  description: string;
+  recipientPartyId?: string;
+  recipientName?: string;
+  recipientCategory: TaxCategory;
+  form: "outright" | "trust";
+  lifetimeTaxPaidPence?: number;
+  smallGift?: boolean;
+  weddingGift?: "child" | "grandchild" | "other";
+  normalExpenditure?: boolean;
+  relief?: { kind: "business" | "agricultural"; rate: "full" | "half"; stillQualifiesAtDeath: boolean };
+  voided?: boolean;
+}
+
+export interface PriorTransferRecord {
+  id: string;
+  label: string;
+  transferOn: ISODate;
+  netIncreasePence: number;
+  grossTransferPence: number;
+  taxPaidPence: number;
+  voided?: boolean;
+}
+
+export interface IntestacyPerson {
+  name: string;
+  alive: boolean;
+  descendants?: IntestacyPerson[];
+}
+
+export interface IntestacyFamilyRecord {
+  spouseName?: string;
+  issue: IntestacyPerson[];
+  parents: string[];
+  siblingsWhole: IntestacyPerson[];
+  siblingsHalf: IntestacyPerson[];
+  grandparents: string[];
+  auntsUnclesWhole: IntestacyPerson[];
+  auntsUnclesHalf: IntestacyPerson[];
+}
+
+/** The estate's inheritance tax facts (firm-only; families never receive this). */
+export interface TaxProfile {
+  longTermUkResident: boolean;
+  spouseExemptionLimited: boolean;
+  transferredNrbBp: number;
+  transferredRnrbBp: number;
+  predeceasedSpouse?: { name: string; diedOn?: ISODate };
+  downsizing?: { disposedOn: ISODate; formerResidenceValuePence: number };
+  reliefAllowanceTransferredPence?: number;
+  residueBenham: boolean;
+  mergeCharityComponents: boolean;
+  intestacyFamily?: IntestacyFamilyRecord;
+  /** Solicitor confirmations of rules-engine flags, by flag code. `message` is the wording confirmed. */
+  confirmations: Record<string, { by: string; at: ISOTime; message: string }>;
+  gifts: LifetimeGiftRecord[];
+  priorTransfers: PriorTransferRecord[];
 }
 
 /** Values computed from the stored record (see derive.ts). Present on every estate the screens receive. */
@@ -252,6 +341,8 @@ export interface Estate extends EstateDerived {
   missing: MissingItem[];
   messages: Message[];
   updates: ClientUpdate[];
+  /** IHT inputs. Firm-only: absent in the portal. */
+  tax?: TaxProfile;
   todayStep?: {
     title: string;
     stepTitle: string;

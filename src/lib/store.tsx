@@ -3,7 +3,8 @@
 import { useHydrated } from "./useNow";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, useTransition } from "react";
-import type { AssetKind, DemoState, Estate, TaskOwner } from "./types";
+import type { AssetKind, AssetTax, DemoState, Estate, IntestacyFamilyRecord, LifetimeGiftRecord, PriorTransferRecord, TaskOwner, TaxCategory } from "./types";
+import type { TaxProfilePatch } from "./reducer";
 import { SEED_VERSION, freshSeed } from "./seed";
 import { reducer, type Action } from "./reducer";
 import { addDays, isoDay, uid } from "./format";
@@ -241,6 +242,17 @@ export function useActions() {
         return id;
       },
       completeOnboarding: (input: { deceasedName: string; relationship: string }) => act({ type: "completeOnboarding", ...input }),
+      // Inheritance tax (staff).
+      updateTaxProfile: (estateId: string, patch: TaxProfilePatch) => act({ type: "updateTaxProfile", estateId, patch }),
+      setPartyTaxCategory: (estateId: string, partyId: string, category: TaxCategory | null) => act({ type: "setPartyTaxCategory", estateId, partyId, category }),
+      setAssetTax: (estateId: string, assetId: string, tax: AssetTax) => act({ type: "setAssetTax", estateId, assetId, tax }),
+      setWillGiftTax: (estateId: string, giftId: string, assetId: string | null, bearsOwnTax: boolean) => act({ type: "setWillGiftTax", estateId, giftId, assetId, bearsOwnTax }),
+      addLifetimeGift: (estateId: string, gift: Omit<LifetimeGiftRecord, "id" | "voided">) => act({ type: "addLifetimeGift", estateId, gift }),
+      voidLifetimeGift: (estateId: string, giftId: string) => act({ type: "voidLifetimeGift", estateId, giftId }),
+      addPriorTransfer: (estateId: string, transfer: Omit<PriorTransferRecord, "id" | "voided">) => act({ type: "addPriorTransfer", estateId, transfer }),
+      voidPriorTransfer: (estateId: string, transferId: string) => act({ type: "voidPriorTransfer", estateId, transferId }),
+      setIntestacyFamily: (estateId: string, family: IntestacyFamilyRecord | null) => act({ type: "setIntestacyFamily", estateId, family }),
+      confirmIhtFlag: (estateId: string, code: string, message: string) => act({ type: "confirmIhtFlag", estateId, code, message }),
     }),
     [act, mode],
   );
