@@ -3,12 +3,11 @@ import type { DemoState, Estate, Party, StaffMember, Task, WaitingOn } from "./t
 import { money } from "./format";
 import { assetStatus } from "./derive";
 import { dueInfo } from "./format";
+import { ihtFor } from "./iht";
 
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 /** Nil-rate band and residence nil-rate band (2026/27). Stored in pence. */
-export const NRB_PENCE = 325_000_00;
-export const RNRB_PENCE = 175_000_00;
 
 export function staffById(state: DemoState, id: string): StaffMember | undefined {
   return state.staff.find((s) => s.id === id);
@@ -63,18 +62,6 @@ export function totals(estate: Estate) {
   return { owned, owed };
 }
 
-export function ihtPosition(estate: Estate) {
-  const { owned, owed } = totals(estate);
-  const debts = owed + estate.funeralEstimatePence;
-  const net = owned - debts;
-  const hasHome = estate.assets.some((a) => a.kind === "property" && !a.liability);
-  const allowance = NRB_PENCE + (hasHome ? RNRB_PENCE : 0);
-  const headroom = allowance - net;
-  const pct = Math.max(0, Math.min(100, Math.round((net / allowance) * 100)));
-  const taxDue = headroom < 0 ? Math.round(-headroom * 0.4) : 0;
-  return { gross: owned, debts, net, allowance, headroom, pct, taxDue, hasHome };
-}
-
 export function pendingDrafts(state: DemoState) {
   return state.estates.flatMap((e) =>
     e.drafts.filter((d) => d.status === "review").map((d) => ({ estate: e, draft: d })),
@@ -97,7 +84,8 @@ export function waitingCounts(state: DemoState) {
 
 /** Plain summary of an estate, used by the assistant panel. */
 export function estateSummary(state: DemoState, estate: Estate): { label: string; text: string }[] {
-  const iht = ihtPosition(estate);
+  const { owned } = totals(estate);
+  const tax = ihtFor(estate).result;
   const client = clientParty(estate);
   const fam = openFamilyTasks(estate);
   const blocked = estate.tasks.filter((t) => !t.done && (dueInfo(t.dueOn, false).overdue || t.owner.kind === "third"));
@@ -108,10 +96,10 @@ export function estateSummary(state: DemoState, estate: Estate): { label: string
     label: "",
     text:
       `Stage ${estate.stage + 1} of 7. ` +
-      (iht.gross > 0
-        ? `Gross estate about ${money(Math.round(iht.gross / 100_000) * 100_000).replace(",000", "k")}` +
+      (owned > 0
+        ? `Gross estate about ${money(Math.round(owned / 100_000) * 100_000).replace(",000", "k")}` +
           (house ? `, mostly ${house.name.split(",")[0]} (${lowerFirst(assetStatus(house, estate, "").firm)}). ` : ". ") +
-          (iht.taxDue > 0 ? `IHT of roughly ${money(iht.taxDue)} likely.` : iht.hasHome ? "No IHT expected if RNRB applies." : "No IHT expected.")
+          (!tax ? "IHT not calculated yet." : tax.totalTaxPence > 0 ? `IHT of about ${money(tax.totalTaxPence)} on the current figures.` : "No IHT expected on the current figures.")
         : "No assets recorded yet."),
   });
   if (blocked.length) out.push({ label: "Blocked", text: blocked.map((t) => t.title).join(". ") + "." });

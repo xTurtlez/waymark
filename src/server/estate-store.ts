@@ -2,7 +2,18 @@ import "server-only";
 import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
 import { schema, type Tx } from "@/db/client";
 import { deriveEstate } from "@/lib/derive";
-import { MILESTONES, type AuditEntry, type Estate, type MilestoneKey, type Party, type StaffMember, type Task } from "@/lib/types";
+import {
+  MILESTONES,
+  type AssetTax,
+  type AuditEntry,
+  type Estate,
+  type IntestacyFamilyRecord,
+  type MilestoneKey,
+  type Party,
+  type StaffMember,
+  type Task,
+  type TaxProfile,
+} from "@/lib/types";
 
 /**
  * Reads and writes the estate record in its normalised tables.
@@ -34,8 +45,8 @@ export interface LoadContext {
   staff: StaffMember[];
   /** user id → membership id, for mapping audit actors. */
   staffByUser: Map<string, string>;
-  /** Firm scope reads the audit trail; portal scope cannot (RLS) and skips it. */
-  includeAudit: boolean;
+  /** Firm scope reads the audit trail and the IHT tables; the portal can't (RLS) and skips them. */
+  scope: "firm" | "portal";
   now?: Date;
 }
 
@@ -47,7 +58,7 @@ export async function loadEstates(tx: Tx, ctx: LoadContext): Promise<{ estates: 
   const ids = rows.map((r) => r.id);
   const inEstates = <T extends { estateId: unknown }>(t: T) => inArray(t.estateId as never, ids);
 
-  const [parties, staffRows, milestones, wills, gifts, holdings, tasks, documents, extractions, drafts, missing, messages, updates, notes] = await Promise.all([
+  const [parties, staffRows, milestones, wills, gifts, holdings, tasks, documents, extractions, drafts, missing, messages, updates, notes, profiles, lifetimeGifts, priorTransfers, holdingTaxes, partyTaxes] = await Promise.all([
     tx.select().from(schema.estateParty).where(inEstates(schema.estateParty)).orderBy(asc(schema.estateParty.createdAt)),
     tx
       .select({ s: schema.estateStaff, role: schema.membership.role, title: schema.membership.title, initials: schema.membership.initials, color: schema.membership.color, name: schema.user.name })
@@ -68,11 +79,20 @@ export async function loadEstates(tx: Tx, ctx: LoadContext): Promise<{ estates: 
     tx.select().from(schema.message).where(inEstates(schema.message)).orderBy(asc(schema.message.sentAt)),
     tx.select().from(schema.clientUpdate).where(inEstates(schema.clientUpdate)).orderBy(asc(schema.clientUpdate.postedAt)),
     tx.select().from(schema.note).where(inEstates(schema.note)).orderBy(asc(schema.note.createdAt)),
+    // IHT tables are firm-only: in portal scope RLS returns no rows.
+    tx.select().from(schema.ihtProfile).where(inEstates(schema.ihtProfile)),
+    tx.select().from(schema.lifetimeGift).where(inEstates(schema.lifetimeGift)).orderBy(asc(schema.lifetimeGift.madeOn), asc(schema.lifetimeGift.createdAt)),
+    tx.select().from(schema.priorTransfer).where(inEstates(schema.priorTransfer)).orderBy(asc(schema.priorTransfer.createdAt)),
+    tx.select().from(schema.holdingTax).where(inEstates(schema.holdingTax)),
+    tx.select().from(schema.partyTax).where(inEstates(schema.partyTax)),
   ]);
+  const firm = ctx.scope === "firm";
+  const holdingTaxBy = new Map(holdingTaxes.map((x) => [x.holdingId, x]));
+  const partyTaxBy = new Map(partyTaxes.map((x) => [x.partyId, x.category]));
 
   // The audit trail on screen is the real, append-only log (latest 50 per estate).
   const auditByEstate = new Map<string, AuditEntry[]>();
-  if (ctx.includeAudit) {
+  if (firm) {
     const audit = (await tx.execute(sql`
       select estate_id, id, created_at, actor_type, actor_user_id, summary from (
         select estate_id, id, created_at, actor_type, actor_user_id, summary,
@@ -100,6 +120,9 @@ export async function loadEstates(tx: Tx, ctx: LoadContext): Promise<{ estates: 
   const Ms = group(messages);
   const U = group(updates);
   const N = group(notes);
+  const Prof = new Map(profiles.map((x) => [x.estateId, x]));
+  const LG = group(lifetimeGifts);
+  const PT = group(priorTransfers);
 
   const estates = rows.map((r) => {
     // Main executor first, then everyone else in the order they were added.
@@ -110,6 +133,51 @@ export async function loadEstates(tx: Tx, ctx: LoadContext): Promise<{ estates: 
     const staffKeyByMembership = new Map((S.get(r.id) ?? []).map((x) => [x.s.membershipId, x.s.key]));
     const docKey = new Map((D.get(r.id) ?? []).map((d) => [d.id, d.key]));
     const holdingKey = new Map((H.get(r.id) ?? []).map((h) => [h.id, h.key]));
+    const prof = Prof.get(r.id);
+    // Firm scope always gets a tax profile (defaults until one is saved); the portal never does.
+    const tax: TaxProfile | undefined = firm
+      ? {
+          longTermUkResident: prof?.longTermUkResident ?? true,
+          spouseExemptionLimited: prof?.spouseExemptionLimited ?? false,
+          transferredNrbBp: prof?.transferredNrbBp ?? 0,
+          transferredRnrbBp: prof?.transferredRnrbBp ?? 0,
+          predeceasedSpouse: prof?.predeceasedSpouseName ? { name: prof.predeceasedSpouseName, diedOn: prof.predeceasedSpouseDiedOn ?? undefined } : undefined,
+          downsizing:
+            prof?.downsizingDisposedOn && prof.downsizingFormerValuePence !== null
+              ? { disposedOn: prof.downsizingDisposedOn, formerResidenceValuePence: prof.downsizingFormerValuePence }
+              : undefined,
+          reliefAllowanceTransferredPence: prof?.reliefAllowanceTransferredPence ?? undefined,
+          residueBenham: prof?.residueBenham ?? false,
+          mergeCharityComponents: prof?.mergeCharityComponents ?? false,
+          intestacyFamily: (prof?.intestacyFamily as IntestacyFamilyRecord | null) ?? undefined,
+          confirmations: (prof?.confirmations as TaxProfile["confirmations"] | undefined) ?? {},
+          gifts: (LG.get(r.id) ?? []).map((g) => ({
+            id: g.key,
+            madeOn: g.madeOn,
+            valuePence: g.valuePence,
+            description: g.description,
+            recipientPartyId: g.recipientPartyId ? partyKey.get(g.recipientPartyId) : undefined,
+            recipientName: g.recipientName ?? undefined,
+            recipientCategory: g.recipientCategory,
+            form: g.form,
+            lifetimeTaxPaidPence: g.lifetimeTaxPaidPence ?? undefined,
+            smallGift: g.smallGift || undefined,
+            weddingGift: g.weddingGift ?? undefined,
+            normalExpenditure: g.normalExpenditure || undefined,
+            relief: g.reliefKind && g.reliefRate ? { kind: g.reliefKind, rate: g.reliefRate, stillQualifiesAtDeath: g.reliefStillQualifies } : undefined,
+            voided: g.voidedAt ? true : undefined,
+          })),
+          priorTransfers: (PT.get(r.id) ?? []).map((p) => ({
+            id: p.key,
+            label: p.label,
+            transferOn: p.transferOn,
+            netIncreasePence: p.netIncreasePence,
+            grossTransferPence: p.grossTransferPence,
+            taxPaidPence: p.taxPaidPence,
+            voided: p.voidedAt ? true : undefined,
+          })),
+        }
+      : undefined;
     const primary = ps.find((p) => p.isPrimary) ?? ps.find((p) => p.role === "executor") ?? ps[0];
 
     const familyParties: Party[] = ps.map((p) => ({
@@ -122,6 +190,7 @@ export async function loadEstates(tx: Tx, ctx: LoadContext): Promise<{ estates: 
       email: p.email ?? undefined,
       color: p.color,
       portalStatus: p.acceptedAt ? "active" : p.invitedAt ? "invited" : "not_invited",
+      taxCategory: (firm && partyTaxBy.get(p.id)) || undefined,
     }));
     const staffParties: Party[] = (S.get(r.id) ?? []).map((x) => ({
       id: x.s.key,
@@ -173,6 +242,8 @@ export async function loadEstates(tx: Tx, ctx: LoadContext): Promise<{ estates: 
               amountPence: g.amountPence ?? undefined,
               shareBp: g.shareBp ?? undefined,
               substitution: g.substitution ?? undefined,
+              assetId: g.holdingId ? holdingKey.get(g.holdingId) : undefined,
+              bearsOwnTax: g.bearsOwnTax || undefined,
             })),
           }
         : undefined,
@@ -210,6 +281,7 @@ export async function loadEstates(tx: Tx, ctx: LoadContext): Promise<{ estates: 
         addedBy: h.addedBy,
         nextAction: h.nextAction === "valuation" ? ("valuation" as const) : undefined,
         nextActionOn: h.nextActionOn ?? undefined,
+        tax: firm ? holdingTax(holdingTaxBy.get(h.id), partyKey, holdingKey) : undefined,
       })),
       documents: (D.get(r.id) ?? []).map((d) => ({
         id: d.key,
@@ -275,12 +347,29 @@ export async function loadEstates(tx: Tx, ctx: LoadContext): Promise<{ estates: 
       updates: (U.get(r.id) ?? [])
         .map((u) => ({ id: u.key, at: iso(u.postedAt)!, title: u.title, body: u.body, tone: u.tone, milestone: u.isMilestone || undefined }))
         .reverse(),
+      tax,
       todayStep: (r.todayStep as Estate["todayStep"]) ?? undefined,
     };
     return deriveEstate(estate, ctx.now);
   });
 
   return { estates, uuidBySlug };
+}
+
+/** A holding's IHT columns as the screens' `AssetTax` (undefined when all default). */
+function holdingTax(h: Row<"holdingTax"> | undefined, partyKey: Map<string, string>, holdingKey: Map<string, string>): AssetTax | undefined {
+  if (!h) return undefined;
+  const t: AssetTax = {};
+  if (h.ownership !== "sole") t.ownership = h.ownership;
+  if (h.survivorPartyId) t.survivorPartyId = partyKey.get(h.survivorPartyId);
+  if (h.qualifyingResidence) t.qualifyingResidence = true;
+  if (h.reliefKind && h.reliefRate) t.relief = { kind: h.reliefKind, rate: h.reliefRate };
+  if (h.pensionTreatment) t.pension = h.pensionTreatment;
+  if (h.pensionRecipientPartyId) t.pensionRecipientPartyId = partyKey.get(h.pensionRecipientPartyId);
+  if (h.foreign) t.foreign = true;
+  if (h.securedOnHoldingId) t.securedOnAssetId = holdingKey.get(h.securedOnHoldingId);
+  if (!h.deductible) t.deductible = false;
+  return Object.keys(t).length ? t : undefined;
 }
 
 // ── Saving ──────────────────────────────────────────────────────────────────
@@ -291,6 +380,8 @@ export interface SaveContext {
   /** Membership id of the acting staff member (null for family). */
   actorMembershipId: string | null;
   actorUserId: string;
+  /** Only firm scope writes the IHT tables (families never receive them, so they'd look cleared). */
+  scope: "firm" | "portal";
 }
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -366,32 +457,10 @@ export async function saveEstate(tx: Tx, ctx: SaveContext, before: Estate | null
     }
   }
 
-  // Will and gifts.
-  if (after.will && !same(before?.will, after.will)) {
-    const w = after.will;
-    const [existing] = await tx.select({ id: schema.will.id }).from(schema.will).where(eq(schema.will.estateId, ctx.estateUuid));
-    const willId = existing?.id ?? crypto.randomUUID();
-    const wv = { datedOn: w.dated, originalHeld: w.originalHeld, location: w.location ?? null, codicils: w.codicils };
-    if (existing) await tx.update(schema.will).set(wv).where(eq(schema.will.id, willId));
-    else await tx.insert(schema.will).values({ id: willId, ...base, ...wv });
-    for (const { item: g, isNew, index } of changed(before?.will?.gifts, w.gifts)) {
-      const gv = {
-        kind: g.kind,
-        beneficiaryPartyId: g.beneficiaryPartyId ? (partyIds.get(g.beneficiaryPartyId) ?? null) : null,
-        description: g.description,
-        amountPence: g.amountPence ?? null,
-        shareBp: g.shareBp ?? null,
-        substitution: g.substitution ?? null,
-        position: index,
-      };
-      if (isNew) await tx.insert(schema.willGift).values({ ...base, willId, key: g.id, ...gv });
-      else await tx.update(schema.willGift).set(gv).where(where(schema.willGift, g.id));
-    }
-  }
-
-  // Holdings.
+  // Holdings (before the will and anything else that points at them).
   const holdingIds = await keyMap(tx, schema.holding, ctx.estateUuid);
-  for (const { item: a, isNew, index } of changed(before?.assets, after.assets)) {
+  const changedAssets = changed(before?.assets, after.assets);
+  for (const { item: a, isNew, index } of changedAssets) {
     const v = {
       kind: a.kind,
       name: a.name,
@@ -412,6 +481,56 @@ export async function saveEstate(tx: Tx, ctx: SaveContext, before: Estate | null
       await tx.insert(schema.holding).values({ id, ...base, key: a.id, ...v });
       holdingIds.set(a.id, id);
     } else await tx.update(schema.holding).set(v).where(where(schema.holding, a.id));
+  }
+  // How each holding is treated for IHT (firm only), now every holding has an id.
+  if (ctx.scope === "firm") {
+    const prevAssets = new Map((before?.assets ?? []).map((a) => [a.id, a]));
+    for (const { item: a } of changedAssets) {
+      if (same(prevAssets.get(a.id)?.tax, a.tax)) continue;
+      const t = a.tax ?? {};
+      const tv = {
+        ownership: t.ownership ?? ("sole" as const),
+        survivorPartyId: t.survivorPartyId ? (partyIds.get(t.survivorPartyId) ?? null) : null,
+        qualifyingResidence: Boolean(t.qualifyingResidence),
+        reliefKind: t.relief?.kind ?? null,
+        reliefRate: t.relief?.rate ?? null,
+        pensionTreatment: t.pension ?? null,
+        pensionRecipientPartyId: t.pensionRecipientPartyId ? (partyIds.get(t.pensionRecipientPartyId) ?? null) : null,
+        foreign: Boolean(t.foreign),
+        securedOnHoldingId: t.securedOnAssetId ? (holdingIds.get(t.securedOnAssetId) ?? null) : null,
+        deductible: t.deductible !== false,
+        updatedAt: new Date(),
+      };
+      await tx
+        .insert(schema.holdingTax)
+        .values({ ...base, holdingId: holdingIds.get(a.id)!, ...tv })
+        .onConflictDoUpdate({ target: schema.holdingTax.holdingId, set: tv });
+    }
+  }
+
+  // Will and gifts.
+  if (after.will && !same(before?.will, after.will)) {
+    const w = after.will;
+    const [existing] = await tx.select({ id: schema.will.id }).from(schema.will).where(eq(schema.will.estateId, ctx.estateUuid));
+    const willId = existing?.id ?? crypto.randomUUID();
+    const wv = { datedOn: w.dated, originalHeld: w.originalHeld, location: w.location ?? null, codicils: w.codicils };
+    if (existing) await tx.update(schema.will).set(wv).where(eq(schema.will.id, willId));
+    else await tx.insert(schema.will).values({ id: willId, ...base, ...wv });
+    for (const { item: g, isNew, index } of changed(before?.will?.gifts, w.gifts)) {
+      const gv = {
+        kind: g.kind,
+        beneficiaryPartyId: g.beneficiaryPartyId ? (partyIds.get(g.beneficiaryPartyId) ?? null) : null,
+        description: g.description,
+        amountPence: g.amountPence ?? null,
+        shareBp: g.shareBp ?? null,
+        substitution: g.substitution ?? null,
+        holdingId: g.assetId ? (holdingIds.get(g.assetId) ?? null) : null,
+        bearsOwnTax: Boolean(g.bearsOwnTax),
+        position: index,
+      };
+      if (isNew) await tx.insert(schema.willGift).values({ ...base, willId, key: g.id, ...gv });
+      else await tx.update(schema.willGift).set(gv).where(where(schema.willGift, g.id));
+    }
   }
 
   // Documents.
@@ -533,6 +652,73 @@ export async function saveEstate(tx: Tx, ctx: SaveContext, before: Estate | null
   for (const { item: n, isNew } of changed(before?.notes, after.notes)) {
     if (!isNew) continue;
     await tx.insert(schema.note).values({ ...base, key: n.id, body: n.text, authorMembershipId: n.author || null, createdAt: new Date(n.at) });
+  }
+
+  // Inheritance tax (firm scope only; families never send a tax profile).
+  if (ctx.scope === "firm") {
+    const prevParties = new Map((before?.parties ?? []).map((p) => [p.id, p]));
+    for (const p of after.parties) {
+      const partyId = partyIds.get(p.id);
+      if (!partyId || (prevParties.get(p.id)?.taxCategory ?? null) === (p.taxCategory ?? null)) continue;
+      const pv = { category: p.taxCategory ?? null, updatedAt: new Date() };
+      await tx.insert(schema.partyTax).values({ ...base, partyId, ...pv }).onConflictDoUpdate({ target: schema.partyTax.partyId, set: pv });
+    }
+  }
+  if (ctx.scope === "firm" && after.tax && !same(before?.tax, after.tax)) {
+    const t = after.tax;
+    const pv = {
+      longTermUkResident: t.longTermUkResident,
+      spouseExemptionLimited: t.spouseExemptionLimited,
+      transferredNrbBp: t.transferredNrbBp,
+      transferredRnrbBp: t.transferredRnrbBp,
+      predeceasedSpouseName: t.predeceasedSpouse?.name ?? null,
+      predeceasedSpouseDiedOn: t.predeceasedSpouse?.diedOn ?? null,
+      downsizingDisposedOn: t.downsizing?.disposedOn ?? null,
+      downsizingFormerValuePence: t.downsizing?.formerResidenceValuePence ?? null,
+      reliefAllowanceTransferredPence: t.reliefAllowanceTransferredPence ?? null,
+      residueBenham: t.residueBenham,
+      mergeCharityComponents: t.mergeCharityComponents,
+      intestacyFamily: t.intestacyFamily ?? null,
+      confirmations: t.confirmations,
+      updatedAt: new Date(),
+    };
+    await tx
+      .insert(schema.ihtProfile)
+      .values({ ...base, ...pv })
+      .onConflictDoUpdate({ target: schema.ihtProfile.estateId, set: pv });
+    for (const { item: g, isNew } of changed(before?.tax?.gifts, t.gifts)) {
+      const gv = {
+        madeOn: g.madeOn,
+        valuePence: g.valuePence,
+        description: g.description,
+        recipientPartyId: g.recipientPartyId ? (partyIds.get(g.recipientPartyId) ?? null) : null,
+        recipientName: g.recipientName ?? null,
+        recipientCategory: g.recipientCategory,
+        form: g.form,
+        lifetimeTaxPaidPence: g.lifetimeTaxPaidPence ?? null,
+        smallGift: Boolean(g.smallGift),
+        weddingGift: g.weddingGift ?? null,
+        normalExpenditure: Boolean(g.normalExpenditure),
+        reliefKind: g.relief?.kind ?? null,
+        reliefRate: g.relief?.rate ?? null,
+        reliefStillQualifies: g.relief?.stillQualifiesAtDeath ?? true,
+        voidedAt: g.voided ? new Date() : null,
+      };
+      if (isNew) await tx.insert(schema.lifetimeGift).values({ ...base, key: g.id, ...gv });
+      else await tx.update(schema.lifetimeGift).set(gv).where(where(schema.lifetimeGift, g.id));
+    }
+    for (const { item: p, isNew } of changed(before?.tax?.priorTransfers, t.priorTransfers)) {
+      const v = {
+        label: p.label,
+        transferOn: p.transferOn,
+        netIncreasePence: p.netIncreasePence,
+        grossTransferPence: p.grossTransferPence,
+        taxPaidPence: p.taxPaidPence,
+        voidedAt: p.voided ? new Date() : null,
+      };
+      if (isNew) await tx.insert(schema.priorTransfer).values({ ...base, key: p.id, ...v });
+      else await tx.update(schema.priorTransfer).set(v).where(where(schema.priorTransfer, p.id));
+    }
   }
 
   // Estate-level fields.

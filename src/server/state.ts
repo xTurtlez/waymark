@@ -25,7 +25,7 @@ export async function loadState(tx: Tx, viewer: StaffViewer | FamilyViewer): Pro
   const staff = staffRows.map(({ m, name }) => ({ id: m.id, name, initials: m.initials, role: m.title ?? ROLE_TITLE[m.role], color: m.color }));
   const staffByUser = new Map(staffRows.map(({ m }) => [m.userId, m.id]));
 
-  const { estates, uuidBySlug } = await loadEstates(tx, { staff, staffByUser, includeAudit: viewer.kind === "staff" });
+  const { estates, uuidBySlug } = await loadEstates(tx, { staff, staffByUser, scope: viewer.kind === "staff" ? "firm" : "portal" });
 
   let currentClientEstateId = estates[0]?.id ?? "";
   let onboarded = true;

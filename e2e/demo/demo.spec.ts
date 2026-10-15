@@ -23,3 +23,15 @@ test("portal journey renders with the seven stages", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /You're doing well/ })).toBeVisible();
   await expect(page.getByRole("list", { name: /Your path/ }).getByRole("listitem")).toHaveCount(7);
 });
+
+test("the IHT tab works in the demo too", async ({ page }) => {
+  await page.goto("practice/estate/?id=mehta&tab=iht");
+  await expect(page.getByRole("heading", { name: "Estate of Anil Mehta" })).toBeVisible();
+  await expect(page.getByText("£305,200").first()).toBeVisible();
+  await page.getByRole("button", { name: /Edit IHT details/ }).click();
+  const sheet = page.getByRole("dialog", { name: "Allowances and elections" });
+  await sheet.getByLabel("Nil-rate band transferred").fill("0");
+  await sheet.getByRole("button", { name: "Save" }).click();
+  // Without the late wife's nil-rate band, more tax is due.
+  await expect(page.getByText("£305,200")).toHaveCount(0);
+});

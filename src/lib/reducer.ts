@@ -1,4 +1,20 @@
-import type { Asset, AssetKind, DemoState, Draft, Estate, ISODate, MissingItem, TaskOwner } from "./types";
+import type {
+  Asset,
+  AssetKind,
+  AssetTax,
+  DemoState,
+  Draft,
+  Estate,
+  IntestacyFamilyRecord,
+  ISODate,
+  LifetimeGiftRecord,
+  MissingItem,
+  PriorTransferRecord,
+  TaskOwner,
+  TaxCategory,
+  TaxProfile,
+} from "./types";
+import { DEFAULT_TAX_PROFILE, TAX_CATEGORY_LABEL } from "./iht";
 import { deriveState } from "./derive";
 import { freshSeed } from "./seed";
 import { addDays, fullDay, isoDay, nowIso, uid } from "./format";
@@ -28,7 +44,52 @@ export type Action =
   | { type: "sendMessage"; estateId: string; from: "client" | "firm"; text: string; attachment?: string }
   | { type: "addNote"; estateId: string; text: string }
   | { type: "createEstate"; id: string; deceasedName: string; clientName: string; clientEmail: string; feeEarnerId: string }
-  | { type: "completeOnboarding"; deceasedName: string; relationship: string };
+  | { type: "completeOnboarding"; deceasedName: string; relationship: string }
+  // Inheritance tax inputs (milestone 3). Staff only.
+  | { type: "updateTaxProfile"; estateId: string; patch: TaxProfilePatch }
+  | { type: "setPartyTaxCategory"; estateId: string; partyId: string; category: TaxCategory | null }
+  | { type: "setAssetTax"; estateId: string; assetId: string; tax: AssetTax }
+  | { type: "setWillGiftTax"; estateId: string; giftId: string; assetId: string | null; bearsOwnTax: boolean }
+  | { type: "addLifetimeGift"; estateId: string; gift: Omit<LifetimeGiftRecord, "id" | "voided"> }
+  | { type: "voidLifetimeGift"; estateId: string; giftId: string }
+  | { type: "addPriorTransfer"; estateId: string; transfer: Omit<PriorTransferRecord, "id" | "voided"> }
+  | { type: "voidPriorTransfer"; estateId: string; transferId: string }
+  | { type: "setIntestacyFamily"; estateId: string; family: IntestacyFamilyRecord | null }
+  | { type: "confirmIhtFlag"; estateId: string; code: string; message: string };
+
+/** Fields of the tax profile set from the IHT tab. `null` clears an optional value. */
+export interface TaxProfilePatch {
+  longTermUkResident?: boolean;
+  spouseExemptionLimited?: boolean;
+  transferredNrbBp?: number;
+  transferredRnrbBp?: number;
+  predeceasedSpouse?: { name: string; diedOn?: ISODate } | null;
+  downsizing?: { disposedOn: ISODate; formerResidenceValuePence: number } | null;
+  reliefAllowanceTransferredPence?: number | null;
+  residueBenham?: boolean;
+  mergeCharityComponents?: boolean;
+}
+
+function taxOf(e: Estate): TaxProfile {
+  if (!e.tax) e.tax = structuredClone(DEFAULT_TAX_PROFILE);
+  return e.tax;
+}
+
+const pounds = (p: number) => `£${(p / 100).toLocaleString("en-GB", { maximumFractionDigits: 2 })}`;
+
+function describePatch(p: TaxProfilePatch): string {
+  const parts: string[] = [];
+  if (p.longTermUkResident !== undefined) parts.push(p.longTermUkResident ? "long-term UK resident" : "not a long-term UK resident");
+  if (p.spouseExemptionLimited !== undefined) parts.push(p.spouseExemptionLimited ? "spouse exemption capped (spouse not UK resident)" : "spouse exemption unlimited");
+  if (p.transferredNrbBp !== undefined) parts.push(`transferred nil-rate band ${p.transferredNrbBp / 100}%`);
+  if (p.transferredRnrbBp !== undefined) parts.push(`transferred residence nil-rate band ${p.transferredRnrbBp / 100}%`);
+  if (p.predeceasedSpouse !== undefined) parts.push(p.predeceasedSpouse ? `predeceased spouse ${p.predeceasedSpouse.name}` : "predeceased spouse removed");
+  if (p.downsizing !== undefined) parts.push(p.downsizing ? `former home ${pounds(p.downsizing.formerResidenceValuePence)} sold or given ${p.downsizing.disposedOn}` : "downsizing removed");
+  if (p.reliefAllowanceTransferredPence !== undefined) parts.push(p.reliefAllowanceTransferredPence === null ? "transferred relief allowance removed" : `relief allowance transferred ${pounds(p.reliefAllowanceTransferredPence)}`);
+  if (p.residueBenham !== undefined) parts.push(p.residueBenham ? "residue divided on the Benham basis" : "residue divided on the usual basis");
+  if (p.mergeCharityComponents !== undefined) parts.push(p.mergeCharityComponents ? "election to merge components for the 36% rate" : "no merge election");
+  return parts.join("; ");
+}
 
 function withEstate(state: DemoState, id: string, fn: (e: Estate, s: DemoState) => void): DemoState {
   const next = structuredClone(state);
@@ -301,6 +362,106 @@ function core(state: DemoState, a: Action): DemoState {
       next.estates.push(est);
       return next;
     }
+
+    case "updateTaxProfile":
+      return withEstate(state, a.estateId, (e, s) => {
+        const t = taxOf(e);
+        const p = a.patch;
+        if (p.longTermUkResident !== undefined) t.longTermUkResident = p.longTermUkResident;
+        if (p.spouseExemptionLimited !== undefined) t.spouseExemptionLimited = p.spouseExemptionLimited;
+        if (p.transferredNrbBp !== undefined) t.transferredNrbBp = p.transferredNrbBp;
+        if (p.transferredRnrbBp !== undefined) t.transferredRnrbBp = p.transferredRnrbBp;
+        if (p.predeceasedSpouse !== undefined) t.predeceasedSpouse = p.predeceasedSpouse ?? undefined;
+        if (p.downsizing !== undefined) t.downsizing = p.downsizing ?? undefined;
+        if (p.reliefAllowanceTransferredPence !== undefined) t.reliefAllowanceTransferredPence = p.reliefAllowanceTransferredPence ?? undefined;
+        if (p.residueBenham !== undefined) t.residueBenham = p.residueBenham;
+        if (p.mergeCharityComponents !== undefined) t.mergeCharityComponents = p.mergeCharityComponents;
+        audit(e, s.currentStaffId, `IHT details updated: ${describePatch(p)}`);
+      });
+
+    case "setPartyTaxCategory":
+      return withEstate(state, a.estateId, (e, s) => {
+        const p = e.parties.find((x) => x.id === a.partyId && !x.staffId);
+        if (!p) return;
+        p.taxCategory = a.category ?? undefined;
+        audit(e, s.currentStaffId, `${p.name} recorded for IHT as: ${a.category ? TAX_CATEGORY_LABEL[a.category].toLowerCase() : "worked out from relationship"}`);
+      });
+
+    case "setAssetTax":
+      return withEstate(state, a.estateId, (e, s) => {
+        const asset = e.assets.find((x) => x.id === a.assetId);
+        if (!asset) return;
+        const tax: AssetTax = {};
+        const t = a.tax;
+        if (t.ownership && t.ownership !== "sole") tax.ownership = t.ownership;
+        if (t.ownership === "joint_tenancy" && t.survivorPartyId) tax.survivorPartyId = t.survivorPartyId;
+        if (t.qualifyingResidence) {
+          tax.qualifyingResidence = true;
+          // Only one home can be nominated.
+          for (const other of e.assets) if (other !== asset && other.tax?.qualifyingResidence) other.tax.qualifyingResidence = undefined;
+        }
+        if (t.relief) tax.relief = t.relief;
+        if (t.pension) tax.pension = t.pension;
+        if (t.pensionRecipientPartyId) tax.pensionRecipientPartyId = t.pensionRecipientPartyId;
+        if (t.foreign) tax.foreign = true;
+        if (t.securedOnAssetId) tax.securedOnAssetId = t.securedOnAssetId;
+        if (t.deductible === false) tax.deductible = false;
+        asset.tax = Object.keys(tax).length ? tax : undefined;
+        audit(e, s.currentStaffId, `IHT treatment of ${asset.name} updated`);
+      });
+
+    case "setWillGiftTax":
+      return withEstate(state, a.estateId, (e, s) => {
+        const g = e.will?.gifts.find((x) => x.id === a.giftId);
+        if (!g) return;
+        if (a.assetId !== null && !e.assets.some((x) => x.id === a.assetId && !x.liability)) return;
+        g.assetId = a.assetId ?? undefined;
+        g.bearsOwnTax = a.bearsOwnTax || undefined;
+        audit(e, s.currentStaffId, `Will gift "${g.description}" ${a.assetId ? `linked to ${e.assets.find((x) => x.id === a.assetId)!.name}` : "unlinked"}${a.bearsOwnTax ? ", bearing its own tax" : ""}`);
+      });
+
+    case "addLifetimeGift":
+      return withEstate(state, a.estateId, (e, s) => {
+        const t = taxOf(e);
+        t.gifts.push({ ...a.gift, id: uid("lg") });
+        t.gifts.sort((x, y) => (x.madeOn < y.madeOn ? -1 : x.madeOn > y.madeOn ? 1 : 0));
+        audit(e, s.currentStaffId, `Lifetime gift recorded: ${a.gift.description}, ${pounds(a.gift.valuePence)} on ${a.gift.madeOn}`);
+      });
+
+    case "voidLifetimeGift":
+      return withEstate(state, a.estateId, (e, s) => {
+        const g = e.tax?.gifts.find((x) => x.id === a.giftId);
+        if (!g || g.voided) return;
+        g.voided = true;
+        audit(e, s.currentStaffId, `Lifetime gift withdrawn: ${g.description}`);
+      });
+
+    case "addPriorTransfer":
+      return withEstate(state, a.estateId, (e, s) => {
+        taxOf(e).priorTransfers.push({ ...a.transfer, id: uid("qsr") });
+        audit(e, s.currentStaffId, `Earlier estate recorded for quick succession relief: ${a.transfer.label}`);
+      });
+
+    case "voidPriorTransfer":
+      return withEstate(state, a.estateId, (e, s) => {
+        const p = e.tax?.priorTransfers.find((x) => x.id === a.transferId);
+        if (!p || p.voided) return;
+        p.voided = true;
+        audit(e, s.currentStaffId, `Earlier estate withdrawn: ${p.label}`);
+      });
+
+    case "setIntestacyFamily":
+      return withEstate(state, a.estateId, (e, s) => {
+        taxOf(e).intestacyFamily = a.family ?? undefined;
+        audit(e, s.currentStaffId, a.family ? "Family recorded for the intestacy rules" : "Intestacy family removed");
+      });
+
+    case "confirmIhtFlag":
+      return withEstate(state, a.estateId, (e, s) => {
+        const me = s.staff.find((m) => m.id === s.currentStaffId);
+        taxOf(e).confirmations[a.code] = { by: s.currentStaffId, at: nowIso(), message: a.message };
+        audit(e, s.currentStaffId, `${me?.name ?? "A solicitor"} confirmed: ${a.message}`);
+      });
 
     case "completeOnboarding": {
       const next = structuredClone(state);
