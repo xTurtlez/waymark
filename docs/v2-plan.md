@@ -59,6 +59,26 @@ Full domain model (M2), rules engine (M3), transactions (M4), IDV, signatures an
 ### Deliverables
 Schema + RLS for every new table; `estate-store.ts` (load/save); derived fields everywhere; seed rewritten onto the same save path; tests: date helpers, derivation, reducer, full save→load round trip, family visibility and write limits, no deletes, RLS on every `firm_id` table.
 
+## Milestone 3: Rules engine and IHT workspace
+
+**Goal:** a pure, dated, fully tested Inheritance Tax and intestacy engine, wired to the estate record, with an explainable breakdown a solicitor can check and export.
+
+### Decisions
+
+| Area | Decision | Why |
+|---|---|---|
+| Engine | `src/rules/`: pure TypeScript, no I/O. `calculateIht(input)` returns figures, an ordered `Line[]` breakdown (each with its source link), flags, who bears the tax, transferable allowances, reporting route and IHT400 schedules, and the payment date. | Brief section 8: explainable, testable, the same in both builds. |
+| Rules as data | `src/rules/tables.ts`: every rate and threshold is a dated row with a source URL; `rulesFor(dateOfDeath)` picks the rows in force. Confirmed to 5 April 2030; later deaths get a `rates_unconfirmed` flag. Deaths before 6 April 2017 are out of scope. | Rules change by date of death, not by release. |
+| Scope | Death estate, grossing up (single and double), s.39A attribution of reliefs, Ratcliffe residue, the 36% charity rate per component (with merge election), RNRB with taper, brought-forward and downsizing, BPR/APR including the £2.5m allowance from 6 April 2026, pensions in the estate from 6 April 2027, lifetime gifts (exemptions, cumulation incl. the 14-year shadow, taper relief), QSR, excepted-estate route, intestacy (per stirpes). | Brief section 8 list. |
+| Not guessing | Where the law or HMRC guidance is unsettled the engine raises a **confirm** flag that a solicitor ticks in the IHT tab; unsupported situations raise **out of scope** and mark the result incomplete. Each is listed in `docs/open-legal-questions.md`. A confirmation is stored with the wording confirmed, so it lapses if the figures change. | Brief: never silently guess a rule. |
+| Tests | 69 hand-checked worked estates (`tests/rules/fixtures.ts`, each with its working in prose) plus unit tests; 100% statement and branch coverage enforced on `src/rules/**`. | Brief: fixture suite ≥ 40, full coverage. |
+| Inputs | New firm-only tables: `iht_profile` (one per estate: residence, transferred bands, predeceased spouse, downsizing, elections, intestacy family, confirmations), `lifetime_gift`, `prior_transfer`, `holding_tax` (ownership, home for RNRB, reliefs, pensions, foreign, secured debts) and `party_tax` (spouse / charity / descendant). `will_gift` links a specific gift to its holding and records "bears its own tax". | Families can read `holding` and `estate_party`; tax treatment lives beside them, not in them, so RLS keeps it firm-only and a family edit can't reset it. |
+| Defaults | Tax category comes from the recorded relationship (wife, son…) unless a solicitor sets it, and the screen says so. Unvalued holdings count as nil with a warning. Missing date of death or succession blocks the calculation with a plain explanation. | Assumptions are visible, never silent. |
+| Screens | IHT tab: summary tiles, gaps and assumptions, the breakdown (CSV download and print), who bears the tax, points for a solicitor, holdings, allowances and elections, the will (or intestacy shares), beneficiaries, gifts, earlier estates, and allowances left for a surviving spouse. The overview card and the assistant use the engine too. | Brief: explainable breakdown, exportable by a solicitor. |
+
+### Deliverables
+Engine + fixtures; migrations `0002_iht` and `0003_iht_security` (grants and firm-only RLS); store load/save; reducer actions with zod validation (staff-only) and audit entries; IHT tab and sheets; seeds covering a taxable estate (Mehta), excepted estates with transferred bands (Ellis, Asante) and an intestacy (Reid); E2E at 1440px and 390px on live and demo.
+
 ## Later milestones
 
 Follow the brief's section 12 order. Each ends green in CI. Uncertain legal or tax rules go to `docs/open-legal-questions.md` as solicitor-confirmed flags rather than guesses.
