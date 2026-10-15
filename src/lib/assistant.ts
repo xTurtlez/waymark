@@ -1,6 +1,7 @@
 import type { DemoState, Estate } from "./types";
-import { clientParty, estateSummary, feeEarner, firstName, ihtPosition, openFamilyTasks } from "./selectors";
-import { money } from "./format";
+import { clientParty, estateSummary, feeEarner, firstName, openFamilyTasks } from "./selectors";
+import { ihtFor, unconfirmedFlags } from "./iht";
+import { fullDay, money } from "./format";
 
 /**
  * Assistant seam.
@@ -102,15 +103,17 @@ export const CLIENT_SUGGESTIONS = ["What is a grant of probate?", "Can I sell th
 
 export function firmAnswer(question: string, state: DemoState, estate: Estate): string[] {
   const q = question.toLowerCase();
-  const iht = ihtPosition(estate);
   const client = clientParty(estate);
   if (/iht|tax|nil|rnrb|nrb/.test(q)) {
+    const view = ihtFor(estate);
+    const r = view.result;
+    if (!r) return ["IHT isn't calculated yet.", ...view.gaps.filter((g) => g.blocking).map((g) => g.message)];
+    const open = unconfirmedFlags(view, estate.tax).length;
     return [
-      `Net estate ${money(iht.net)} against allowances of ${money(iht.allowance)}${iht.hasHome ? " (NRB + RNRB)" : " (NRB only)"}.`,
-      iht.taxDue > 0
-        ? `Estimated IHT ${money(iht.taxDue)} at 40% on ${money(-iht.headroom)}.`
-        : `No IHT expected. Headroom ${money(iht.headroom)}.`,
-      iht.hasHome ? "RNRB relies on the home passing to a direct descendant; confirm against the will." : "",
+      `Chargeable estate ${money(r.estate.chargeablePence)} against available bands of ${money(r.estate.nilRateBandAvailablePence + r.estate.residenceNilRateBandPence)}.`,
+      r.totalTaxPence > 0 ? `IHT ${money(r.totalTaxPence)} on the current figures, due by ${fullDay(r.paymentDueOn)}.` : "No IHT on the current figures.",
+      open ? `${open} point${open > 1 ? "s" : ""} in the IHT tab still need a solicitor to confirm.` : "",
+      view.gaps.length ? "Some figures are missing; see the IHT tab before relying on this." : "",
     ].filter(Boolean);
   }
   if (/sarah|family|client|executor|waiting on/.test(q)) {

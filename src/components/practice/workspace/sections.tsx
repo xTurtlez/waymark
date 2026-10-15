@@ -5,9 +5,10 @@ import { PiCheckBold, PiPaperclip, PiPaperPlaneRightFill, PiPlusBold } from "rea
 import { ASSET_ICON, DOC_FIRM, DOC_ICON } from "@/components/shared/assetMeta";
 import { Avatar, EmptyNote, SectionCard, btn, input } from "@/components/ui/primitives";
 import { TONE_CHIP } from "@/lib/stages";
-import { actor, ihtPosition, partyById, staffById, firstName } from "@/lib/selectors";
+import { actor, partyById, staffById, firstName } from "@/lib/selectors";
+import { ihtFor, unconfirmedFlags } from "@/lib/iht";
 import { useActions } from "@/lib/store";
-import { money, signedMoney } from "@/lib/format";
+import { fullDay, money, signedMoney } from "@/lib/format";
 import type { DemoState, Estate, PartyRole, Task, TaskOwner } from "@/lib/types";
 import { assetStatus } from "@/lib/derive";
 import { dayHeading, dayLabel, dueInfo, isoDay, shortDay, stampLabel, timeLabel, uploadedLabel } from "@/lib/format";
@@ -197,49 +198,59 @@ export function AuditCard({ state, estate, limit }: { state: DemoState; estate: 
 
 /* ───────────── IHT ───────────── */
 
-export function IhtCard({ estate, expanded }: { estate: Estate; expanded?: boolean }) {
-  const iht = ihtPosition(estate);
-  const over = iht.headroom < 0;
+export function IhtCard({ estate, onOpen }: { estate: Estate; onOpen?: () => void }) {
+  const view = ihtFor(estate);
+  const r = view.result;
+  const open = unconfirmedFlags(view, estate.tax).length;
+  const band = r ? r.estate.nilRateBandAvailablePence + r.estate.residenceNilRateBandPence : 0;
+  const pct = r && band ? Math.max(0, Math.min(100, Math.round((r.estate.chargeablePence / band) * 100))) : 0;
   return (
-    <SectionCard title="IHT position" tone="teal" action={<span className="rounded-full bg-paper px-[9px] py-[3px] text-xs font-semibold text-teal">Estimate</span>}>
-      <dl className="m-0 mt-3.5 flex flex-col gap-2 text-sm">
-        <div className="flex justify-between">
-          <dt>Gross estate</dt>
-          <dd className="m-0 font-bold">{money(iht.gross)}</dd>
-        </div>
-        <div className="flex justify-between">
-          <dt>Debts &amp; funeral</dt>
-          <dd className="m-0 font-bold">− {money(iht.debts)}</dd>
-        </div>
-        <div className="flex justify-between border-t border-teal/20 pt-2">
-          <dt>Net estate</dt>
-          <dd className="m-0 font-bold">{money(iht.net)}</dd>
-        </div>
-        <div className="flex justify-between">
-          <dt>{iht.hasHome ? "Nil-rate band + RNRB" : "Nil-rate band"}</dt>
-          <dd className="m-0 font-bold">{money(iht.allowance)}</dd>
-        </div>
-      </dl>
-      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/70" role="img" aria-label={`Net estate is ${iht.pct}% of the available allowance`}>
-        <div className={`h-full rounded-full ${over ? "bg-coral" : "bg-teal"}`} style={{ width: `${iht.pct}%` }} />
-      </div>
-      <p className="m-0 mt-2.5 text-sm leading-[1.45]">
-        {over ? (
-          <>
-            Estimated IHT <b>{money(iht.taxDue)}</b> at 40% on {money(-iht.headroom)} over the threshold.
-          </>
-        ) : (
-          <>No IHT expected. Headroom {money(iht.headroom)}.</>
-        )}{" "}
-        {iht.hasHome && `RNRB depends on home passing to ${firstName(partyById(estate, estate.clientPartyId)?.name ?? "a direct descendant")}; confirm with the will.`}
-      </p>
-      {expanded && (
-        <div className="mt-4 rounded-[14px] bg-paper/70 p-4 text-sm leading-relaxed text-teal-text">
-          <p className="m-0">
-            Thresholds used: nil-rate band £325,000{iht.hasHome ? ", residence nil-rate band £175,000" : ""}. Transferable allowances from a late spouse, lifetime gifts in the last 7 years, and reliefs (BPR/APR) are not yet included.
+    <SectionCard
+      title="Inheritance Tax"
+      tone="teal"
+      action={
+        onOpen ? (
+          <button type="button" onClick={onOpen} className="rounded-full bg-paper px-[11px] py-[4px] text-xs font-semibold text-teal hover:bg-teal-tint">
+            Open IHT
+          </button>
+        ) : undefined
+      }
+    >
+      {!r ? (
+        <p className="m-0 mt-3 text-sm leading-[1.45]">
+          Not calculated yet. {view.gaps.find((g) => g.blocking)?.message}
+        </p>
+      ) : (
+        <>
+          <dl className="m-0 mt-3.5 flex flex-col gap-2 text-sm">
+            <div className="flex justify-between">
+              <dt>Net estate</dt>
+              <dd className="m-0 font-bold">{money(r.estate.netPence)}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt>Chargeable after exemptions and reliefs</dt>
+              <dd className="m-0 font-bold">{money(r.estate.chargeablePence)}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt>{r.estate.residenceNilRateBandPence ? "Nil-rate bands" : "Nil-rate band"} available</dt>
+              <dd className="m-0 font-bold">{money(band)}</dd>
+            </div>
+          </dl>
+          <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/70" role="img" aria-label={`Chargeable estate is ${pct}% of the bands available`}>
+            <div className={`h-full rounded-full ${r.totalTaxPence ? "bg-coral" : "bg-teal"}`} style={{ width: `${pct}%` }} />
+          </div>
+          <p className="m-0 mt-2.5 text-sm leading-[1.45]">
+            {r.totalTaxPence ? (
+              <>
+                IHT <b>{money(r.totalTaxPence)}</b> on the current figures, due by {fullDay(r.paymentDueOn)}.
+              </>
+            ) : (
+              <>No IHT on the current figures.</>
+            )}{" "}
+            {open ? `${open} point${open > 1 ? "s" : ""} to confirm.` : ""}
+            {view.gaps.length ? " Some figures are missing." : ""}
           </p>
-          <p className="m-0 mt-2">Values marked estimate or TBC are included at their current figure. Pensions shown as TBC are excluded.</p>
-        </div>
+        </>
       )}
     </SectionCard>
   );

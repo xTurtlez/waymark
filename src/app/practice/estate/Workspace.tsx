@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { PiCaretRight, PiEye } from "react-icons/pi";
 import { AssistantPanel, type AiTab } from "@/components/practice/workspace/AssistantPanel";
+import { IhtTab } from "@/components/practice/workspace/iht/IhtTab";
 import { AuditCard, DocumentsCard, IhtCard, LedgerCard, MessagesCard, NotesCard, PartiesCard, TasksCard } from "@/components/practice/workspace/sections";
 import { AddAssetSheet } from "@/components/shared/AddAssetSheet";
 import { STAGES, segState } from "@/lib/stages";
@@ -162,7 +163,7 @@ export function EstateWorkspace() {
               <AuditCard state={state} estate={estate} limit={5} />
             </div>
             <div className="flex min-w-0 flex-col gap-[18px]">
-              <IhtCard estate={estate} />
+              <IhtCard estate={estate} onOpen={() => setTab("iht")} />
               <PartiesCard estate={estate} />
               <DocumentsCard estate={estate} />
               <NotesCard state={state} estate={estate} />
@@ -175,10 +176,7 @@ export function EstateWorkspace() {
         {tab === "documents" && <DocumentsCard estate={estate} full />}
         {tab === "tasks" && <TasksCard state={state} estate={estate} />}
         {tab === "iht" && (
-          <div className="grid items-start gap-[18px] lg:grid-cols-2">
-            <IhtCard estate={estate} expanded />
-            <LedgerCard estate={estate} />
-          </div>
+          <IhtTab state={state} estate={estate} />
         )}
         {tab === "notes" && <NotesCard state={state} estate={estate} full />}
         {tab === "audit" && <AuditCard state={state} estate={estate} />}
