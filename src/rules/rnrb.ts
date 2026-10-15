@@ -29,8 +29,6 @@ export interface RnrbOutcome {
   downsizingAdditionPence: Pence;
   /** Total RNRB available against the death estate. */
   totalPence: Pence;
-  /** Unused RNRB as a percentage of the residential enhancement, for a surviving spouse's estate. */
-  unusedBp: BasisPoints;
   lines: Line[];
   flags: Flag[];
 }
@@ -127,15 +125,12 @@ export function computeRnrb(i: RnrbInput): RnrbOutcome {
   }
 
   const total = Math.min(adjusted, residenceAmount + addition);
-  const unused = pos(adjusted - total);
-  const unusedBp = ratioBp(unused, enhancement);
   lines.push({
     id: "rnrb:total",
     section: "allowances",
     label: "Residence nil-rate band available",
     amountPence: total,
     op: "total",
-    detail: unused ? `${formatPounds(unused)} unused (${formatBp(unusedBp)}) can pass to a surviving spouse's estate.` : undefined,
   });
 
   return {
@@ -146,7 +141,6 @@ export function computeRnrb(i: RnrbInput): RnrbOutcome {
     lostRelievableAmountPence: lost,
     downsizingAdditionPence: addition,
     totalPence: total,
-    unusedBp,
     lines,
     flags,
   };

@@ -596,6 +596,14 @@ export function calculateIht(input: IhtInput): IhtResult {
   const rnrbUsed = Math.min(rnrb.totalPence, chargeable);
   const nrbUsed = Math.min(nrbAvailable, pos(chargeable - rnrbUsed));
   const unusedNrbBp = ratioBp(nrbAvailable - nrbUsed, NRB);
+  // The residence nil-rate amount can't exceed the value transferred (IHTA 1984 s.8E/8F), so whatever the
+  // chargeable estate doesn't use, as well as anything lost to the home's value or the taper, is unused.
+  const unusedRnrb = pos(rnrb.adjustedAllowancePence - rnrbUsed);
+  const unusedRnrbBp = ratioBp(unusedRnrb, enhancement);
+  if (unusedRnrb) {
+    const total = lines.find((l) => l.id === "rnrb:total");
+    if (total) total.detail = `${formatPounds(unusedRnrb)} unused (${formatBp(unusedRnrbBp)}) can pass to a surviving spouse's estate.`;
+  }
   const reliefAllowanceUnused = allowanceLeft === null ? null : pos(allowanceLeft - reliefs.allowanceUsedPence);
 
   // ── Reporting ────────────────────────────────────────────────────────────
@@ -688,7 +696,7 @@ export function calculateIht(input: IhtInput): IhtResult {
     },
     attribution,
     totalTaxPence: totalTax,
-    transferable: { nilRateBandBp: unusedNrbBp, residenceNilRateBandBp: rnrb.unusedBp, reliefAllowancePence: reliefAllowanceUnused },
+    transferable: { nilRateBandBp: unusedNrbBp, residenceNilRateBandBp: unusedRnrbBp, reliefAllowancePence: reliefAllowanceUnused },
     reporting: { route: report.route, reasons: report.reasons, schedules },
     paymentDueOn,
     complete: !uniqueFlags.some((f) => f.level === "out_of_scope"),

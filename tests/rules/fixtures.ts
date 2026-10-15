@@ -539,6 +539,14 @@ export const FIXTURES: Fixture[] = [
     ], [residue("nephew")]),
     expect: { estateTax: 14_142_858, rateBp: 4_000, flags: ["charity_components"], noFlags: ["charity_merge"] },
   },
+  {
+    name: "69 intestacy: residence band only partly used is transferable",
+    why: "Net £487k: chattels £12k + legacy £322k + half of £153k (£76,500) to spouse: £410,500 exempt. Children's £76,500 is chargeable. Home in residue is half closely inherited (£190k): RNRB £175k, but the residence nil-rate amount can't exceed the value transferred (s.8E), so only £76,500 is used. Unused: £98,500 of £175,000 = 56.29% RNRB and 100% NRB to the surviving spouse.",
+    input: estate("2026-09-07", [home(380_000), cash(95_000), asset("chattels", "chattels", 12_000)], [], {
+      succession: { type: "intestacy", family: { ...noFamily(), spouseName: "Ann", issue: [{ name: "Ben", alive: true }, { name: "Cara", alive: true }] } },
+    }),
+    expect: { estateTax: 0, spouseExempt: gbp(410_500), chargeable: gbp(76_500), rnrb: gbp(175_000), unusedRnrbBp: 5_629, unusedNrbBp: 10_000, route: "excepted_exempt" },
+  },
 ];
 
 void R;
